@@ -1,0 +1,7 @@
+prefix: "MTTEST"
+ready: "MTTEST_READY mode={mode}"
+pending: "MTTEST_PENDING mode={mode}"
+snapshot: "MTTEST_SNAPSHOT saved=true"
+reset: "MTTEST_RESET success=true"
+restore: "MTTEST_RESTORE success=true"
+invalid: "MTTEST_ERROR reason={reason}"

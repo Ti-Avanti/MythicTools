@@ -1,0 +1,17 @@
+enabled: false
+mob: SkeletalMinion
+location:
+  world: world
+  x: 0.5
+  y: 64.0
+  z: 0.5
+  yaw: 0.0
+  pitch: 0.0
+interval-seconds: 300
+amount:
+  min: 1
+  max: 1
+max-alive: 1
+level: 1.0
+spawn-on-death: false
+despawn-seconds: 0

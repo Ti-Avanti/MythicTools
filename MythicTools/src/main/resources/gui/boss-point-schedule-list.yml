@@ -1,0 +1,22 @@
+title-key: gui.boss-point-schedule-list.title
+Layout:
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#########'
+  - '#p#b###n#'
+items:
+  e:
+    material: CLOCK
+    display-name-key: gui.boss-point-schedule-list.entry-name
+    lore-keys: [gui.boss-point-schedule-list.entry-lore]
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.boss-point-schedule-list.back-name
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name

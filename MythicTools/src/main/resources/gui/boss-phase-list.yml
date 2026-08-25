@@ -1,0 +1,26 @@
+title-key: gui.boss-phase-list.title
+Layout:
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#########'
+  - '#p#b#c#n#'
+items:
+  e:
+    material: WITHER_SKELETON_SKULL
+    display-name-key: gui.boss-phase-list.entry-name
+    lore-keys: [gui.boss-phase-list.entry-lore]
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.boss-phase-list.back-name
+  c:
+    material: LIME_CONCRETE
+    display-name-key: gui.boss-phase-list.create-name
+    lore-keys: [gui.boss-phase-list.create-lore]
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name

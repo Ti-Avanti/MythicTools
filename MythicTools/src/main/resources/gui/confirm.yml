@@ -1,0 +1,12 @@
+title-key: gui.confirm.title
+Layout:
+  - '#########'
+  - '##y###n##'
+  - '#########'
+items:
+  y:
+    material: LIME_CONCRETE
+    display-name-key: gui.confirm.yes-name
+  n:
+    material: RED_CONCRETE
+    display-name-key: gui.confirm.no-name

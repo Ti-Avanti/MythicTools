@@ -1,0 +1,26 @@
+# 稀有度 ID 可在掉落条目中引用
+rarities:
+  common:
+    display:
+      zh_CN: "<!i><white>普通"
+      en_US: "<!i><white>Common"
+    color: WHITE
+    priority: 10
+  rare:
+    display:
+      zh_CN: "<!i><aqua>稀有"
+      en_US: "<!i><aqua>Rare"
+    color: AQUA
+    priority: 20
+  epic:
+    display:
+      zh_CN: "<!i><light_purple>史诗"
+      en_US: "<!i><light_purple>Epic"
+    color: LIGHT_PURPLE
+    priority: 30
+  legendary:
+    display:
+      zh_CN: "<!i><gold>传说"
+      en_US: "<!i><gold>Legendary"
+    color: GOLD
+    priority: 40

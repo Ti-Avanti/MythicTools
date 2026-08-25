@@ -1,0 +1,34 @@
+title-key: gui.boss-time-window-list.title
+Layout:
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '##z###f##'
+  - '#p#b#c#n#'
+items:
+  e:
+    material: CLOCK
+    display-name-key: gui.boss-time-window-list.entry-name
+    lore-keys: [gui.boss-time-window-list.entry-lore]
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.boss-time-window-list.back-name
+  c:
+    material: LIME_DYE
+    display-name-key: gui.boss-time-window-list.create-name
+    lore-keys: [gui.boss-time-window-list.create-lore]
+  z:
+    material: COMPASS
+    display-name-key: gui.boss-time-window-list.timezone-name
+    lore-keys: [gui.boss-time-window-list.timezone-lore]
+  f:
+    material: REPEATER
+    display-name-key: gui.boss-time-window-list.fallback-name
+    lore-keys: [gui.boss-time-window-list.fallback-lore]
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name

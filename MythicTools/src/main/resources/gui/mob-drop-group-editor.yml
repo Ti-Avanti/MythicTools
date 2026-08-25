@@ -1,0 +1,31 @@
+title-key: gui.mob-drop-group-editor.title
+Layout:
+  - '#########'
+  - '#g#w#m#x#'
+  - '#########'
+  - '#########'
+  - '#########'
+  - '###b#s###'
+items:
+  g:
+    material: CHEST
+    display-name-key: gui.mob-drop-group-editor.group-name
+    lore-keys: [gui.mob-drop-group-editor.group-lore]
+  w:
+    material: GOLD_NUGGET
+    display-name-key: gui.mob-drop-group-editor.weight-name
+    lore-keys: [gui.mob-drop-group-editor.weight-lore]
+  m:
+    material: HOPPER
+    display-name-key: gui.mob-drop-group-editor.minimum-name
+    lore-keys: [gui.mob-drop-group-editor.minimum-lore]
+  x:
+    material: DISPENSER
+    display-name-key: gui.mob-drop-group-editor.maximum-name
+    lore-keys: [gui.mob-drop-group-editor.maximum-lore]
+  b:
+    material: BARRIER
+    display-name-key: gui.mob-drop-group-editor.cancel-name
+  s:
+    material: EMERALD
+    display-name-key: gui.mob-drop-group-editor.save-name

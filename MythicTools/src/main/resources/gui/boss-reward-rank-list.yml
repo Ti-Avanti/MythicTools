@@ -1,0 +1,27 @@
+title-key: gui.boss-reward-rank-list.title
+Layout:
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#########'
+  - '#p#b#c#n#'
+items:
+  e:
+    material: GOLD_INGOT
+    display-name-key: gui.boss-reward-rank-list.entry-name
+    lore-keys: [gui.boss-reward-rank-list.entry-lore]
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.boss-reward-rank-list.back-name
+  c:
+    material: LIME_DYE
+    display-name-key: gui.boss-reward-rank-list.create-name
+    lore-keys: [gui.boss-reward-rank-list.create-lore]
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name
+

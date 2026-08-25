@@ -1,0 +1,27 @@
+title-key: gui.boss-spawner-list.title
+Layout:
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#########'
+  - '#p#b#c#n#'
+items:
+  e:
+    material: SPAWNER
+    semantic-material: true
+    display-name-key: gui.boss-spawner-list.entry-name
+    lore-keys: [gui.boss-spawner-list.entry-lore]
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.boss-spawner-list.back-name
+  c:
+    material: LIME_CONCRETE
+    display-name-key: gui.boss-spawner-list.create-name
+    lore-keys: [gui.boss-spawner-list.create-lore]
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name

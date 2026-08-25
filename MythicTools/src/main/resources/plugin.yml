@@ -1,0 +1,45 @@
+name: MythicTools
+main: gg.fotia.mythictools.MythicToolsPlugin
+version: '${project.version}'
+api-version: '1.20'
+author: fotia
+description: MythicMobs 掉落、刷怪与 Boss 管理工具
+
+depend:
+  - MythicMobs
+  - PlaceholderAPI
+  - packetevents
+softdepend:
+  - CraftEngine
+libraries:
+  - org.xerial:sqlite-jdbc:3.46.1.0
+  - net.kyori:adventure-api:4.14.0
+  - net.kyori:adventure-text-minimessage:4.14.0
+  - net.kyori:adventure-text-serializer-gson:4.14.0
+  - net.kyori:adventure-text-serializer-legacy:4.14.0
+  - net.kyori:adventure-text-serializer-plain:4.14.0
+
+commands:
+  mythictools:
+    description: MythicTools 主命令
+    usage: /<command> [gui|reload|info|boss|spawnpoint]
+    aliases: [mt, mtools]
+    permission: mythictools.command
+
+permissions:
+  mythictools.*:
+    description: MythicTools 所有权限
+    default: op
+    children:
+      mythictools.command: true
+      mythictools.admin: true
+      mythictools.reload: true
+  mythictools.command:
+    description: 使用 MythicTools 基础命令
+    default: true
+  mythictools.admin:
+    description: 打开并编辑管理 GUI
+    default: op
+  mythictools.reload:
+    description: 重载 MythicTools
+    default: op

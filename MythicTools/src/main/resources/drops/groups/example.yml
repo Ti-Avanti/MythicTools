@@ -1,0 +1,30 @@
+# 示例掉落组。管理员 GUI 保存的真实物品会写入 item 节点。
+entries:
+  diamond:
+    type: item
+    material: DIAMOND
+    weight: 80
+    min-amount: 1
+    max-amount: 2
+    rarity: rare
+    delivery: ground
+    display:
+      zh_CN: "<!i><aqua>钻石"
+      en_US: "<!i><aqua>Diamond"
+    message:
+      zh_CN: "<!i><green>你获得了 {reward} x{amount} <gray>[{rarity}]"
+      en_US: "<!i><green>You received {reward} x{amount} <gray>[{rarity}]"
+  command-diamond:
+    type: command
+    command: "give {player} diamond 1"
+    executor: console
+    weight: 20
+    min-amount: 1
+    max-amount: 1
+    rarity: epic
+    display:
+      zh_CN: "<!i><light_purple>指令钻石"
+      en_US: "<!i><light_purple>Command Diamond"
+    message:
+      zh_CN: "<!i><green>你获得了 {reward} <gray>[{rarity}]"
+      en_US: "<!i><green>You received {reward} <gray>[{rarity}]"

@@ -1,0 +1,16 @@
+title-key: gui.category.title
+Layout:
+  - '#########'
+  - '##g#g#g##'
+  - '##g#g#g##'
+  - '##g#g#g##'
+  - '####b####'
+items:
+  g:
+    material: BOOK
+    semantic-material: true
+    display-name-key: gui.category.entry-name
+    lore-keys: [gui.category.entry-lore]
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.category.back-name

@@ -1,0 +1,26 @@
+title-key: gui.reward-option-selector.title
+Layout:
+  - '#########'
+  - '#g#i#c#p#'
+  - '#########'
+  - '####b####'
+items:
+  g:
+    material: GRASS_BLOCK
+    display-name-key: gui.reward-option-selector.ground-name
+    lore-keys: [gui.reward-option-selector.ground-lore, gui.reward-option-selector.option-lore]
+  i:
+    material: CHEST
+    display-name-key: gui.reward-option-selector.inventory-name
+    lore-keys: [gui.reward-option-selector.inventory-lore, gui.reward-option-selector.option-lore]
+  c:
+    material: COMMAND_BLOCK
+    display-name-key: gui.reward-option-selector.console-name
+    lore-keys: [gui.reward-option-selector.console-lore, gui.reward-option-selector.option-lore]
+  p:
+    material: PLAYER_HEAD
+    display-name-key: gui.reward-option-selector.player-name
+    lore-keys: [gui.reward-option-selector.player-lore, gui.reward-option-selector.option-lore]
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.reward-option-selector.back-name

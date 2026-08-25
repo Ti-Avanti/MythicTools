@@ -1,0 +1,22 @@
+title-key: gui.spawning-menu.title
+Layout:
+  - '#########'
+  - '#b##p##g#'
+  - '#########'
+  - '####r####'
+items:
+  b:
+    material: GRASS_BLOCK
+    display-name-key: gui.spawning-menu.biome-name
+    lore-keys: [gui.spawning-menu.biome-lore]
+  p:
+    material: LODESTONE
+    display-name-key: gui.spawning-menu.point-name
+    lore-keys: [gui.spawning-menu.point-lore]
+  g:
+    material: SPAWNER
+    display-name-key: gui.spawning-menu.group-name
+    lore-keys: [gui.spawning-menu.group-lore]
+  r:
+    material: OAK_DOOR
+    display-name-key: gui.spawning-menu.back-name

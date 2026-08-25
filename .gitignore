@@ -1,0 +1,21 @@
+# Maven outputs
+**/target/
+
+# Local dependency/server build workspaces
+.spigot-build-*/
+*.jar
+*.hprof
+hs_err_pid*.log
+
+# Local agent and code-index state
+.agents/
+.codex/
+.omx/
+**/.codegraph/
+
+# IDE and operating-system files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

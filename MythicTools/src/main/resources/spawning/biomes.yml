@@ -1,0 +1,28 @@
+# 玩家停留在匹配群系时，按间隔进行随机生成尝试。
+rules:
+  example-forest:
+    enabled: false
+    mob: SkeletalMinion
+    worlds: []
+    biomes:
+      - FOREST
+      - BIRCH_FOREST
+    chance: 0.10
+    interval-seconds: 30
+    min-distance: 12
+    max-distance: 32
+    height:
+      min: -64
+      max: 320
+    light:
+      min: 0
+      max: 15
+    amount:
+      min: 1
+      max: 1
+    limits:
+      nearby: 3
+      global: 20
+      radius: 48
+    level: 1.0
+    despawn-seconds: 0

@@ -1,0 +1,13 @@
+# PlaceholderAPI 输出文本。所有内容支持 MiniMessage、旧颜色码和 PAPI。
+boolean:
+  true: "<!i><green>是"
+  false: "<!i><red>否"
+unknown: "<!i><gray>未知"
+not-found: "<!i><gray>不存在"
+seconds: "<!i><white>{value}秒"
+boss:
+  inactive: "<!i><gray>未生成"
+  alive: "<!i><green>存活"
+  phase: "<!i><white>{current}/{total}"
+  health: "<!i><white>{current}/{max}"
+  top-damage: "<!i><gold>{player}</gold><gray>: </gray><white>{damage}"

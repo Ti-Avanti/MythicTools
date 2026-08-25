@@ -1,0 +1,31 @@
+title-key: gui.boss-reward-group-list.title
+Layout:
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '####t####'
+  - '#p#b#c#n#'
+items:
+  e:
+    material: CHEST
+    display-name-key: gui.boss-reward-group-list.entry-name
+    lore-keys: [gui.boss-reward-group-list.entry-lore]
+  t:
+    material: LEVER
+    display-name-key: gui.boss-reward-group-list.enabled-name
+    lore-keys: [gui.boss-reward-group-list.enabled-lore]
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.boss-reward-group-list.back-name
+  c:
+    material: LIME_DYE
+    display-name-key: gui.boss-reward-group-list.create-name
+    lore-keys: [gui.boss-reward-group-list.create-lore]
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name
+

@@ -1,0 +1,29 @@
+title-key: gui.editor.title
+Layout:
+  - '#fffffff#'
+  - '#fffffff#'
+  - '#fffffff#'
+  - '#fffffff#'
+  - '#iiiiiii#'
+  - '#p#b#s#n#'
+items:
+  f:
+    material: PAPER
+    semantic-material: true
+    display-name-key: gui.editor.field-name
+    lore-keys: [gui.editor.field-lore]
+  i:
+    material: LIGHT_GRAY_STAINED_GLASS_PANE
+    display-name-key: gui.editor.item-slot-name
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: BARRIER
+    display-name-key: gui.editor.cancel-name
+  s:
+    material: EMERALD
+    display-name-key: gui.editor.save-name
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name

@@ -1,0 +1,12 @@
+# 可被群系刷怪规则和固定刷怪点复用的怪物组。
+amount:
+  min: 2
+  max: 4
+
+members:
+  skeletal-minion:
+    mob: SkeletalMinion
+    weight: 70
+  angry-sludge:
+    mob: AngrySludge
+    weight: 30

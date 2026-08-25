@@ -1,0 +1,66 @@
+# ================================
+# MythicTools 主配置文件
+# ================================
+
+Language:
+  # 客户端语言没有对应文件时使用的语言
+  Default: zh_CN
+  Follow-Client: true
+  Locale-Aliases:
+    zh_cn: zh_CN
+    zh_tw: zh_CN
+    zh_hk: zh_CN
+    en_us: en_US
+    en_gb: en_US
+    en_ca: en_US
+    en_au: en_US
+
+MythicMobs:
+  # 仅接管 drops/mobs 中已配置怪物的掉落
+  Override-Drops: true
+  # 启用本插件的群系刷怪和固定刷怪点
+  Override-Spawning: true
+  # 启用本插件的 Boss 生成与奖励
+  Override-Boss: true
+
+Spawning:
+  # 群系刷怪统一检查周期（tick）
+  Check-Period-Ticks: 100
+  # 每次寻找合法生成位置的最大尝试次数
+  Location-Attempts: 12
+  # 未配置时使用的玩家生成距离
+  Default-Min-Distance: 12
+  Default-Max-Distance: 32
+
+Rewards:
+  # 背包已满时，直接发给在线玩家的物品掉落在脚下
+  Drop-Overflow-At-Feet: true
+
+# 防止误配置造成单次奖励或抽取量失控；所有值都必须是大于 0 的整数
+Safety-Limits:
+  # 每只怪物一次最多抽取多少条掉落
+  Max-Drops-Per-Mob: 16
+  # 单条物品奖励一次最多发放多少个物品
+  Max-Item-Amount-Per-Grant: 2304
+  # 单条命令奖励一次最多执行多少次
+  Max-Command-Executions-Per-Grant: 16
+  # 每只怪物一次最多给予多少经验
+  Max-Experience-Per-Mob: 100000
+  # 单个奖励、掉落组引用或怪物组成员允许的最大权重
+  Max-Weight: 1000000
+  # Boss 每个奖励组最多抽取多少份
+  Max-Boss-Group-Copies: 16
+  # 每名 Boss 奖励接收者一次最多抽取多少份奖励
+  Max-Boss-Selections-Per-Recipient: 32
+  # Boss 伤害排名最多奖励多少名玩家
+  Max-Boss-Recipients: 20
+
+Text:
+  # CraftEngine 不存在或图片不存在时替换 <image:...>
+  Missing-Image-Fallback: "<?>"
+
+Database:
+  File: data.db
+
+# 输出调试日志（重载耗时与配置诊断数量）
+Debug: false

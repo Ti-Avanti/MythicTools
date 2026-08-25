@@ -1,0 +1,30 @@
+title-key: gui.reward-editor.item-title
+Layout:
+  - '#fffffff#'
+  - '#fffffff#'
+  - '#fffffff#'
+  - '####i####'
+  - '#########'
+  - '#p#b#s#n#'
+items:
+  f:
+    material: PAPER
+    semantic-material: true
+    display-name-key: gui.editor.field-name
+    lore-keys: [gui.editor.field-lore]
+  i:
+    material: CHEST
+    display-name-key: gui.reward-editor.item-slot-name
+    lore-keys: [gui.reward-editor.item-slot-lore]
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: BARRIER
+    display-name-key: gui.reward-editor.cancel-name
+  s:
+    material: EMERALD
+    display-name-key: gui.reward-editor.save-name
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name

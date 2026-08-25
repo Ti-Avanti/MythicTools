@@ -1,0 +1,21 @@
+title-key: gui.boss-reward-group-editor.title
+Layout:
+  - '#########'
+  - '##g###c##'
+  - '#########'
+  - '###b#s###'
+items:
+  g:
+    material: CHEST
+    display-name-key: gui.boss-reward-group-editor.group-name
+    lore-keys: [gui.boss-reward-group-editor.group-lore]
+  c:
+    material: AMETHYST_SHARD
+    display-name-key: gui.boss-reward-group-editor.copies-name
+    lore-keys: [gui.boss-reward-group-editor.copies-lore]
+  b:
+    material: BARRIER
+    display-name-key: gui.boss-reward-group-editor.cancel-name
+  s:
+    material: EMERALD
+    display-name-key: gui.boss-reward-group-editor.save-name

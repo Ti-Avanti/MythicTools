@@ -1,0 +1,25 @@
+name: MythicToolsBlackBoxTest
+main: gg.fotia.mythictools.blackboxtest.MythicToolsBlackBoxTestPlugin
+version: '${project.version}'
+api-version: '1.20'
+author: fotia
+description: MythicTools 专用 BlackBoxPro 全功能验收辅助插件
+
+depend:
+  - MythicTools
+  - MythicMobs
+softdepend:
+  - PlaceholderAPI
+libraries:
+  - org.xerial:sqlite-jdbc:3.46.1.0
+
+commands:
+  mttest:
+    description: MythicTools 黑盒测试辅助命令
+    usage: /mttest <snapshot|reset|restore|fixture|spawn|kill|point|boss|schedule-kill|state|reload|remove|pending|assert|papi|mark|permission>
+    permission: mythictoolsblackboxtest.use
+
+permissions:
+  mythictoolsblackboxtest.use:
+    description: 使用 MythicTools 黑盒测试辅助命令
+    default: op

@@ -1,0 +1,25 @@
+title-key: gui.section-editor.title
+Layout:
+  - '#fffffff#'
+  - '#fffffff#'
+  - '#fffffff#'
+  - '#fffffff#'
+  - '#p#b#s#n#'
+items:
+  f:
+    material: PAPER
+    semantic-material: true
+    display-name-key: gui.editor.field-name
+    lore-keys: [gui.editor.field-lore]
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.section-editor.cancel-name
+  s:
+    material: EMERALD
+    display-name-key: gui.section-editor.save-name
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name

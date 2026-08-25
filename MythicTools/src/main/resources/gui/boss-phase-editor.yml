@@ -1,0 +1,31 @@
+title-key: gui.boss-phase-editor.title
+Layout:
+  - '#########'
+  - '##m###l##'
+  - '##u###d##'
+  - '#########'
+  - '#########'
+  - '###b#s###'
+items:
+  m:
+    material: ZOMBIE_HEAD
+    display-name-key: gui.boss-phase-editor.mob-name
+    lore-keys: [gui.boss-phase-editor.mob-lore]
+  l:
+    material: EXPERIENCE_BOTTLE
+    display-name-key: gui.boss-phase-editor.level-name
+    lore-keys: [gui.boss-phase-editor.level-lore]
+  u:
+    material: SPECTRAL_ARROW
+    display-name-key: gui.boss-phase-editor.move-up-name
+    lore-keys: [gui.boss-phase-editor.move-up-lore]
+  d:
+    material: ARROW
+    display-name-key: gui.boss-phase-editor.move-down-name
+    lore-keys: [gui.boss-phase-editor.move-down-lore]
+  b:
+    material: BARRIER
+    display-name-key: gui.boss-phase-editor.cancel-name
+  s:
+    material: EMERALD_BLOCK
+    display-name-key: gui.boss-phase-editor.save-name

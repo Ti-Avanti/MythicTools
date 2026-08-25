@@ -1,0 +1,25 @@
+title-key: gui.main.title
+Layout:
+  - '#########'
+  - '#d##s##b#'
+  - '#########'
+  - '#r#####c#'
+items:
+  d:
+    material: CHEST
+    display-name-key: gui.main.drops-name
+    lore-keys: [gui.main.drops-lore]
+  s:
+    material: SPAWNER
+    display-name-key: gui.main.spawning-name
+    lore-keys: [gui.main.spawning-lore]
+  b:
+    material: NETHER_STAR
+    display-name-key: gui.main.bosses-name
+    lore-keys: [gui.main.bosses-lore]
+  r:
+    material: SUNFLOWER
+    display-name-key: gui.main.reload-name
+  c:
+    material: BARRIER
+    display-name-key: gui.main.close-name

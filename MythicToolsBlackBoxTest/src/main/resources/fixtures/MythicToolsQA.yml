@@ -1,0 +1,62 @@
+MTQA_DropMob:
+  Type: ZOMBIE
+  Display: '<white>MTQA Drop Mob'
+  Health: 10
+  Damage: 0
+  Options:
+    Silent: true
+    NoAI: true
+    PreventOtherDrops: true
+    Despawn: false
+
+MTQA_SpawnMob:
+  Type: SKELETON
+  Display: '<white>MTQA Spawn Mob'
+  Health: 10
+  Damage: 0
+  Options:
+    Silent: true
+    NoAI: true
+    PreventOtherDrops: true
+    Despawn: false
+
+MTQA_BossPhase1:
+  Type: HUSK
+  Display: '<red>MTQA Boss Phase 1'
+  Health: 10
+  Damage: 0
+  Options:
+    Silent: true
+    NoAI: true
+    PreventOtherDrops: true
+    Despawn: false
+  Drops:
+    - DIAMOND 1
+
+MTQA_BossPhase2:
+  Type: WITHER_SKELETON
+  Display: '<dark_red>MTQA Boss Phase 2'
+  Health: 12
+  Damage: 0
+  Options:
+    Silent: true
+    NoAI: true
+    PreventOtherDrops: true
+    Despawn: false
+  Drops:
+    - DIAMOND 1
+
+MTQA_NativeBoss:
+  Type: HUSK
+  Display: '<gold>MTQA Native Boss'
+  Health: 20
+  Damage: 0
+  Skills:
+    - setstance{stance=phase_two} @self ~onTimer:20
+  Options:
+    Silent: true
+    NoAI: true
+    PreventOtherDrops: true
+    Despawn: false
+  Drops:
+    - DIAMOND 1

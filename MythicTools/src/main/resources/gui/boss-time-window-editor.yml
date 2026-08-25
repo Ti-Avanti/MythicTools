@@ -1,0 +1,27 @@
+title-key: gui.boss-time-window-editor.title
+Layout:
+  - '#########'
+  - '##a#e#i##'
+  - '#########'
+  - '#########'
+  - '#########'
+  - '###b#s###'
+items:
+  a:
+    material: CLOCK
+    display-name-key: gui.boss-time-window-editor.start-name
+    lore-keys: [gui.boss-time-window-editor.start-lore]
+  e:
+    material: CLOCK
+    display-name-key: gui.boss-time-window-editor.end-name
+    lore-keys: [gui.boss-time-window-editor.end-lore]
+  i:
+    material: REPEATER
+    display-name-key: gui.boss-time-window-editor.interval-name
+    lore-keys: [gui.boss-time-window-editor.interval-lore]
+  b:
+    material: BARRIER
+    display-name-key: gui.boss-time-window-editor.cancel-name
+  s:
+    material: EMERALD
+    display-name-key: gui.boss-time-window-editor.save-name

@@ -1,0 +1,25 @@
+title-key: gui.list.title
+Layout:
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#########'
+  - '#p#b#c#n#'
+items:
+  e:
+    material: PAPER
+    display-name-key: gui.list.entry-name
+    lore-keys: [gui.list.entry-lore]
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.list.back-name
+  c:
+    material: LIME_DYE
+    display-name-key: gui.list.create-name
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name

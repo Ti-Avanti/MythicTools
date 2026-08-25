@@ -1,0 +1,26 @@
+title-key: gui.reward-rarity-selector.title
+Layout:
+  - '#usususu#'
+  - '#sususus#'
+  - '#usususu#'
+  - '#sususus#'
+  - '#########'
+  - '#p##b##n#'
+items:
+  u:
+    material: AMETHYST_SHARD
+    display-name-key: gui.reward-rarity-selector.entry-name
+    lore-keys: [gui.reward-rarity-selector.entry-lore]
+  s:
+    material: AMETHYST_SHARD
+    display-name-key: gui.reward-rarity-selector.entry-name
+    lore-keys: [gui.reward-rarity-selector.selected-lore]
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.selector.back-name
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name

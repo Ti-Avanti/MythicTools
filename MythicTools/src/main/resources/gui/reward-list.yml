@@ -1,0 +1,30 @@
+title-key: gui.reward-list.title
+Layout:
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '###i#c###'
+  - '#p#b#n###'
+items:
+  e:
+    material: COMMAND_BLOCK
+    display-name-key: gui.reward-list.entry-name
+    lore-keys: [gui.reward-list.entry-lore]
+  i:
+    material: CHEST
+    display-name-key: gui.reward-list.create-item-name
+    lore-keys: [gui.reward-list.create-item-lore]
+  c:
+    material: COMMAND_BLOCK
+    display-name-key: gui.reward-list.create-command-name
+    lore-keys: [gui.reward-list.create-command-lore]
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.reward-list.back-name
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name

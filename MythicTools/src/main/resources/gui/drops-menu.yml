@@ -1,0 +1,18 @@
+title-key: gui.drops-menu.title
+Layout:
+  - '#########'
+  - '##g###m##'
+  - '#########'
+  - '####r####'
+items:
+  g:
+    material: BARREL
+    display-name-key: gui.drops-menu.groups-name
+    lore-keys: [gui.drops-menu.groups-lore]
+  m:
+    material: ROTTEN_FLESH
+    display-name-key: gui.drops-menu.mobs-name
+    lore-keys: [gui.drops-menu.mobs-lore]
+  r:
+    material: OAK_DOOR
+    display-name-key: gui.drops-menu.back-name

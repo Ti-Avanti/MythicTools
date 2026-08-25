@@ -1,0 +1,23 @@
+title-key: gui.mob-member-editor.title
+Layout:
+  - '#########'
+  - '##m###w##'
+  - '#########'
+  - '#########'
+  - '#########'
+  - '###b#s###'
+items:
+  m:
+    material: NAME_TAG
+    display-name-key: gui.mob-member-editor.mob-name
+    lore-keys: [gui.mob-member-editor.mob-lore]
+  w:
+    material: GOLD_NUGGET
+    display-name-key: gui.mob-member-editor.weight-name
+    lore-keys: [gui.mob-member-editor.weight-lore]
+  b:
+    material: BARRIER
+    display-name-key: gui.mob-member-editor.cancel-name
+  s:
+    material: EMERALD
+    display-name-key: gui.mob-member-editor.save-name

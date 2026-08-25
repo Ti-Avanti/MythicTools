@@ -1,0 +1,26 @@
+title-key: gui.selector.title
+Layout:
+  - '#usususu#'
+  - '#sususus#'
+  - '#usususu#'
+  - '#sususus#'
+  - '#########'
+  - '#p##b##n#'
+items:
+  u:
+    material: PAPER
+    display-name-key: gui.selector.option-name
+    lore-keys: [gui.selector.unselected-lore]
+  s:
+    material: LIME_DYE
+    display-name-key: gui.selector.option-name
+    lore-keys: [gui.selector.selected-lore]
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.selector.back-name
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name

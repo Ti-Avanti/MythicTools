@@ -1,0 +1,11 @@
+# MythicMob ID；省略时使用文件名
+mob-id: SkeletalMinion
+max-drops: 2
+experience:
+  min: 10
+  max: 30
+groups:
+  - id: example
+    weight: 100
+    min-amount: 1
+    max-amount: 2

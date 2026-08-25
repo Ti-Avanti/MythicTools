@@ -1,0 +1,95 @@
+display:
+  zh_CN: "<!i><red>示例多形态 Boss"
+  en_US: "<!i><red>Example Multi-phase Boss"
+
+# 阶段模式：death-respawn 由 MythicTools 在阶段死亡处生成下一只怪物；
+# mythic-native 只生成 mythic-native.mob，后续阶段由 MythicMobs 技能（如 setstance）处理。
+phase-mode: death-respawn
+
+# death-respawn 模式使用此列表。
+phases:
+  - mob: SkeletalMinion
+    level: 1.0
+  - mob: AngrySludge
+    level: 1.0
+
+# mythic-native 模式使用此根怪物；可通过 %mythictools_boss:<id>:stance% 查看当前 stance。
+# mythic-native:
+#   mob: SkeletalMinion
+#   level: 1.0
+
+# 中间阶段：none（清空掉落）或 mythic（保留 MythicMobs 掉落）。
+# 最终阶段：mythictools-only、mythic-only 或 combined。
+loot:
+  intermediate-stage: none
+  final-stage: mythictools-only
+
+spawning:
+  biome:
+    forest:
+      enabled: false
+      worlds: []
+      biomes: [FOREST, BIRCH_FOREST]
+      chance: 0.01
+      interval-seconds: 600
+      min-distance: 16
+      max-distance: 40
+      max-active: 1
+      # 该群系生成器独立判断在线人数；0 表示不限制。
+      minimum-online-players: 0
+  points:
+    world-center:
+      enabled: false
+      max-active: 1
+      # 此固定点独立判断在线人数；0 表示不限制。
+      minimum-online-players: 0
+      # 固定点时间计划：窗口外按默认间隔刷新，窗口内按对应窗口间隔刷新。
+      schedule:
+        timezone: "Asia/Shanghai"
+        fallback-interval-seconds: 7200
+        # 键名可自由定义，例如 morning、noon、evening；时间格式为 HH:mm。
+        time-windows:
+          evening:
+            start: "18:00"
+            end: "21:00"
+            interval-seconds: 1800
+      location:
+        world: world
+        x: 0.5
+        y: 64.0
+        z: 0.5
+        yaw: 0.0
+        pitch: 0.0
+
+broadcast:
+  spawn:
+    message:
+      zh_CN: "<!i><red>Boss <gold>{boss}</gold> 已在 <white>{location}</white> 生成"
+      en_US: "<!i><red>Boss <gold>{boss}</gold> spawned at <white>{location}</white>"
+    commands: []
+  death:
+    message:
+      zh_CN: "<!i><green>Boss <gold>{boss}</gold> 已被 <white>{killer}</white> 击败"
+      en_US: "<!i><green>Boss <gold>{boss}</gold> was defeated by <white>{killer}</white>"
+    commands: []
+
+rewards:
+  damage-ranking:
+    enabled: true
+    max-recipients: 3
+    chat-display: true
+    ranks:
+      '1':
+        - group: example
+          copies: 3
+      '2':
+        - group: example
+          copies: 2
+      '3':
+        - group: example
+          copies: 1
+  killer:
+    enabled: true
+    groups:
+      - group: example
+        copies: 1

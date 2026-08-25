@@ -1,0 +1,28 @@
+title-key: gui.boss-ranking-reward-menu.title
+Layout:
+  - '#########'
+  - '#e#m#c###'
+  - '#########'
+  - '####r####'
+  - '####b####'
+items:
+  e:
+    material: LEVER
+    display-name-key: gui.boss-ranking-reward-menu.enabled-name
+    lore-keys: [gui.boss-ranking-reward-menu.enabled-lore]
+  m:
+    material: PLAYER_HEAD
+    display-name-key: gui.boss-ranking-reward-menu.maximum-name
+    lore-keys: [gui.boss-ranking-reward-menu.maximum-lore]
+  c:
+    material: WRITABLE_BOOK
+    display-name-key: gui.boss-ranking-reward-menu.chat-name
+    lore-keys: [gui.boss-ranking-reward-menu.chat-lore]
+  r:
+    material: GOLD_INGOT
+    display-name-key: gui.boss-ranking-reward-menu.ranks-name
+    lore-keys: [gui.boss-ranking-reward-menu.ranks-lore]
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.boss-ranking-reward-menu.back-name
+
