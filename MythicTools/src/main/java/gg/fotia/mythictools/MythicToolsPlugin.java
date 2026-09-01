@@ -21,6 +21,7 @@ import gg.fotia.mythictools.runtime.RuntimeSwap;
 import gg.fotia.mythictools.spawning.SpawningManager;
 import gg.fotia.mythictools.spawning.SpawningRepository;
 import gg.fotia.mythictools.storage.PendingRewardRepository;
+import gg.fotia.mythictools.storage.FirstDefeatRepository;
 import gg.fotia.mythictools.text.MessageRenderer;
 import gg.fotia.mythictools.version.ServerVersion;
 import java.io.File;
@@ -38,6 +39,7 @@ public final class MythicToolsPlugin extends JavaPlugin {
     private final RuntimeSwap<PluginRuntime> runtimes = new RuntimeSwap<>(
             exception -> getLogger().log(Level.WARNING, "旧运行时清理失败，新运行时继续工作", exception));
     private PendingRewardRepository pendingRewards;
+    private FirstDefeatRepository firstDefeats;
     private OwnedTasks infrastructureTasks;
     private File databaseFile;
     private PacketLocaleListener packetLocaleListener;
@@ -53,8 +55,9 @@ public final class MythicToolsPlugin extends JavaPlugin {
             databaseFile = databaseFile(initialSettings);
             infrastructureTasks = new OwnedTasks(new BukkitTaskScheduler(this));
             pendingRewards = new PendingRewardRepository(this, databaseFile, infrastructureTasks);
+            firstDefeats = new FirstDefeatRepository(databaseFile);
             runtimes.installInitial(PluginRuntime.prepare(
-                    this, configuration, ConfigLoadMode.STARTUP_LENIENT, pendingRewards));
+                    this, configuration, ConfigLoadMode.STARTUP_LENIENT, pendingRewards, firstDefeats));
             registerStableBridges();
             reloadConfig();
             getLogger().info("MythicTools 已启用，耗时 " + (System.currentTimeMillis() - started) + "ms");
@@ -84,7 +87,7 @@ public final class MythicToolsPlugin extends JavaPlugin {
                         "Database.File 无法热切换；旧运行时与待发奖励仍保持可用，请修改后重启服务器");
             }
             runtimes.replace(() -> PluginRuntime.prepare(
-                    this, configuration, ConfigLoadMode.STRICT, pendingRewards));
+                    this, configuration, ConfigLoadMode.STRICT, pendingRewards, firstDefeats));
             reloadConfig();
             if (expansion != null) {
                 expansion.reload();
@@ -214,6 +217,10 @@ public final class MythicToolsPlugin extends JavaPlugin {
         if (pendingRewards != null) {
             pendingRewards.close();
             pendingRewards = null;
+        }
+        if (firstDefeats != null) {
+            firstDefeats.close();
+            firstDefeats = null;
         }
         if (infrastructureTasks != null) {
             infrastructureTasks.cancelAll();

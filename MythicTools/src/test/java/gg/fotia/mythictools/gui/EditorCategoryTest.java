@@ -24,7 +24,8 @@ class EditorCategoryTest {
     @Test
     void groupsBossAndMobDropFieldsIntoDedicatedSections() {
         assertEquals(List.of("boss-basic", "boss-loot", "boss-biome-spawning", "boss-point-spawning",
-                        "boss-point-schedule", "boss-broadcasts", "boss-ranking-rewards", "boss-killer-rewards"),
+                        "boss-point-schedule", "boss-broadcasts", "boss-ranking-rewards",
+                        "boss-killer-rewards", "boss-first-defeat"),
                 EditorCategory.forType(AdminType.BOSS).stream().map(EditorCategory::key).toList());
         assertTrue(EditorCategory.BOSS_BASIC.acceptsField("display"));
         assertTrue(EditorCategory.BOSS_BASIC.acceptsField("phase-mode"));
@@ -41,8 +42,10 @@ class EditorCategoryTest {
         assertTrue(EditorCategory.BOSS_BROADCASTS.acceptsField("broadcast.death.message.zh_CN"));
         assertTrue(EditorCategory.BOSS_RANKING_REWARDS.acceptsField("rewards.damage-ranking.max-recipients"));
         assertTrue(EditorCategory.BOSS_KILLER_REWARDS.acceptsField("rewards.killer.groups"));
-        assertEquals(List.of("mob-drop-basic", "mob-drop-groups"),
+        assertTrue(EditorCategory.BOSS_FIRST_DEFEAT.acceptsField("rewards.first-defeat.scope"));
+        assertEquals(List.of("mob-drop-basic", "mob-drop-groups", "mob-drop-first-defeat"),
                 EditorCategory.forType(AdminType.MOB_DROP).stream().map(EditorCategory::key).toList());
+        assertTrue(EditorCategory.MOB_DROP_FIRST_DEFEAT.acceptsField("first-defeat.entries"));
     }
 
     @Test

@@ -2,6 +2,7 @@ package gg.fotia.mythictools.gui;
 
 import gg.fotia.mythictools.config.SafetyLimits;
 import gg.fotia.mythictools.reward.Rarity;
+import gg.fotia.mythictools.reward.FirstDefeatRewardOption;
 import gg.fotia.mythictools.runtime.BukkitTaskScheduler;
 import gg.fotia.mythictools.runtime.OwnedTasks;
 import gg.fotia.mythictools.text.MessageRenderer;
@@ -37,11 +38,12 @@ public final class AdminGuiManager implements Listener {
             Supplier<List<String>> loadedMobGroupIds,
             Supplier<List<String>> loadedDropGroupIds,
             Supplier<List<Rarity>> configuredRarities,
+            Supplier<List<FirstDefeatRewardOption>> firstDefeatRewardOptions,
             Function<Player, String> playerLocale,
             SafetyLimits safetyLimits) {
         this(plugin, templates, messages, chatInput, saveReloadAction, fullReloadAction,
                 mobExists, mobIds, loadedMobGroupIds, loadedDropGroupIds,
-                configuredRarities, playerLocale, safetyLimits,
+                configuredRarities, firstDefeatRewardOptions, playerLocale, safetyLimits,
                 new OwnedTasks(new BukkitTaskScheduler(plugin)));
     }
 
@@ -57,13 +59,14 @@ public final class AdminGuiManager implements Listener {
             Supplier<List<String>> loadedMobGroupIds,
             Supplier<List<String>> loadedDropGroupIds,
             Supplier<List<Rarity>> configuredRarities,
+            Supplier<List<FirstDefeatRewardOption>> firstDefeatRewardOptions,
             Function<Player, String> playerLocale,
             SafetyLimits safetyLimits,
             OwnedTasks tasks) {
         this.context = new GuiContext(
                 plugin, templates, messages, chatInput, saveReloadAction, fullReloadAction,
                 mobExists, mobIds, loadedMobGroupIds, loadedDropGroupIds,
-                configuredRarities, playerLocale,
+                configuredRarities, firstDefeatRewardOptions, playerLocale,
                 java.util.Objects.requireNonNull(safetyLimits, "safetyLimits"),
                 java.util.Objects.requireNonNull(tasks, "tasks"));
         context.bindControllers(
@@ -75,7 +78,8 @@ public final class AdminGuiManager implements Listener {
                 new BossPhaseGuiController(context),
                 new BossRewardGuiController(context),
                 new BossSpawnerGuiController(context),
-                new BossScheduleGuiController(context));
+                new BossScheduleGuiController(context),
+                new FirstDefeatGuiController(context));
     }
 
     /** 打开管理总览。 */
@@ -125,6 +129,11 @@ public final class AdminGuiManager implements Listener {
             case REWARD_RARITY_SELECTOR -> context.rewards.handleRewardRaritySelector(player, holder, rawSlot);
             case REWARD_OPTION_SELECTOR -> context.rewards.handleRewardOptionSelector(player, holder, rawSlot);
             case REWARD_CONFIRM -> context.rewards.handleRewardConfirm(player, holder, rawSlot);
+            case FIRST_DEFEAT_MENU -> context.firstDefeats.handleMenu(player, holder, rawSlot);
+            case FIRST_DEFEAT_REWARD_LIST -> context.firstDefeats.handleRewardList(
+                    player, holder, rawSlot, deleteClick);
+            case FIRST_DEFEAT_REWARD_SELECTOR -> context.firstDefeats.handleRewardSelector(
+                    player, holder, rawSlot);
             case MOB_MEMBER_LIST -> context.mobMembers.handleMobMemberList(player, holder, rawSlot, deleteClick);
             case MOB_MEMBER_EDITOR -> context.mobMembers.handleMobMemberEditor(player, holder, rawSlot);
             case MOB_MEMBER_MOB_SELECTOR -> context.mobMembers.handleMobMemberMobSelector(player, holder, rawSlot);

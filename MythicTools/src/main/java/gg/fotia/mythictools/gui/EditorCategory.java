@@ -19,6 +19,8 @@ enum EditorCategory {
             exact("mob-id", "max-drops", "experience.min", "experience.max"), null),
     MOB_DROP_GROUPS(AdminType.MOB_DROP, "mob-drop-groups",
             prefixed("groups"), null),
+    MOB_DROP_FIRST_DEFEAT(AdminType.MOB_DROP, "mob-drop-first-defeat",
+            prefixed("first-defeat."), null),
 
     DROP_ITEM_REWARDS(AdminType.DROP_GROUP, "drop-item-rewards", ignored -> false, "item"),
     DROP_COMMAND_REWARDS(AdminType.DROP_GROUP, "drop-command-rewards", ignored -> false, "command"),
@@ -41,7 +43,9 @@ enum EditorCategory {
     BOSS_RANKING_REWARDS(AdminType.BOSS, "boss-ranking-rewards",
             prefixed("rewards.damage-ranking."), null),
     BOSS_KILLER_REWARDS(AdminType.BOSS, "boss-killer-rewards",
-            prefixed("rewards.killer."), null);
+            prefixed("rewards.killer."), null),
+    BOSS_FIRST_DEFEAT(AdminType.BOSS, "boss-first-defeat",
+            prefixed("rewards.first-defeat."), null);
 
     private final AdminType type;
     private final String key;

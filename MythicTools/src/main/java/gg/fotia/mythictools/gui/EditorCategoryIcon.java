@@ -18,6 +18,7 @@ final class EditorCategoryIcon {
             case "biome-limits" -> Material.IRON_BARS;
             case "mob-drop-basic" -> Material.ROTTEN_FLESH;
             case "mob-drop-groups" -> Material.BARREL;
+            case "mob-drop-first-defeat" -> Material.TOTEM_OF_UNDYING;
             case "drop-item-rewards" -> Material.DIAMOND;
             case "drop-command-rewards" -> Material.COMMAND_BLOCK;
             case "mob-group-amount" -> Material.DROPPER;
@@ -30,6 +31,7 @@ final class EditorCategoryIcon {
             case "boss-broadcasts" -> Material.BELL;
             case "boss-ranking-rewards" -> Material.GOLD_INGOT;
             case "boss-killer-rewards" -> Material.DIAMOND_SWORD;
+            case "boss-first-defeat" -> Material.DRAGON_EGG;
             default -> Material.BOOK;
         };
     }

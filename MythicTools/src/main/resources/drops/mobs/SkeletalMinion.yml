@@ -9,3 +9,12 @@ groups:
     weight: 100
     min-amount: 1
     max-amount: 2
+
+# 首次击败专用奖励不会进入上方权重随机池。
+first-defeat:
+  enabled: false
+  scope: player
+  recipient: killer
+  entries:
+    - group: example
+      entry: first-trophy

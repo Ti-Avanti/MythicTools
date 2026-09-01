@@ -1,7 +1,22 @@
 # 示例掉落组。管理员 GUI 保存的真实物品会写入 item 节点。
 entries:
+  first-trophy:
+    type: item
+    grant-mode: first-defeat
+    material: NETHER_STAR
+    min-amount: 1
+    max-amount: 1
+    rarity: epic
+    delivery: inventory
+    display:
+      zh_CN: "<!i><light_purple>首次击败纪念星"
+      en_US: "<!i><light_purple>First Defeat Trophy"
+    message:
+      zh_CN: "<!i><green>你获得了首次击败奖励 {reward}"
+      en_US: "<!i><green>You received the first-defeat reward {reward}"
   diamond:
     type: item
+    grant-mode: weighted
     material: DIAMOND
     weight: 80
     min-amount: 1
@@ -16,6 +31,7 @@ entries:
       en_US: "<!i><green>You received {reward} x{amount} <gray>[{rarity}]"
   command-diamond:
     type: command
+    grant-mode: weighted
     command: "give {player} diamond 1"
     executor: console
     weight: 20

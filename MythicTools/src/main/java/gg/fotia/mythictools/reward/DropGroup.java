@@ -14,6 +14,7 @@ public final class DropGroup {
         this.id = id;
         this.entries = List.copyOf(entries);
         List<RewardEntry> positives = this.entries.stream()
+                .filter(entry -> entry.grantMode() == RewardGrantMode.WEIGHTED)
                 .filter(entry -> entry.weight() > 0L)
                 .toList();
         long total = 0L;

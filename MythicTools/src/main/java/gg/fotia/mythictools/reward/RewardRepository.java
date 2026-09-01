@@ -101,12 +101,31 @@ public final class RewardRepository {
         return store.current().rewards().group(id);
     }
 
+    /** 查询掉落组中的确定奖励条目。 */
+    public Optional<RewardEntry> entry(String groupId, String entryId) {
+        return group(groupId).flatMap(group -> group.entries().stream()
+                .filter(entry -> entry.id().equals(entryId)).findFirst());
+    }
+
     public Optional<MobDropRule> mobRule(String mobId) {
         return store.current().rewards().mobRule(mobId);
     }
 
     public Collection<String> groupIds() {
         return store.current().rewards().groupIds();
+    }
+
+    /** 返回 GUI 可引用的全部首次击败专用奖励。 */
+    public List<FirstDefeatRewardOption> firstDefeatOptions() {
+        List<FirstDefeatRewardOption> result = new ArrayList<>();
+        for (String groupId : groupIds()) {
+            group(groupId).orElseThrow().entries().stream()
+                    .filter(entry -> entry.grantMode() == RewardGrantMode.FIRST_DEFEAT)
+                    .forEach(entry -> result.add(new FirstDefeatRewardOption(groupId, entry)));
+        }
+        result.sort(java.util.Comparator.comparing(FirstDefeatRewardOption::groupId)
+                .thenComparing(option -> option.entry().id()));
+        return List.copyOf(result);
     }
 
     public Collection<String> mobIds() {
@@ -210,7 +229,10 @@ public final class RewardRepository {
                     refs.add(new DropGroupRef(groupId, weight, min, max));
                 }
                 checkedTotalWeight(refs.stream().map(DropGroupRef::weight).toList(), "groups.weight");
-                mobRules.put(mobId, new MobDropRule(mobId, maxDrops, minExp, maxExp, refs));
+                FirstDefeatRewardConfig firstDefeat = parseFirstDefeat(
+                        yaml, "first-defeat", groups, file, true);
+                mobRules.put(mobId, new MobDropRule(
+                        mobId, maxDrops, minExp, maxExp, refs, firstDefeat));
             } catch (IOException exception) {
                 diagnostics.add(diagnostic(ConfigSeverity.ERROR, file, "$", ConfigProblemCode.IO_ERROR,
                         "无法读取怪物掉落配置", exception));
@@ -230,8 +252,11 @@ public final class RewardRepository {
             File file,
             Map<String, Rarity> rarities) {
         RewardType type = parseEnum(RewardType.class, section.getString("type", "item"), "type");
-        long weight = ConfigValues.longOrDefault(
-                section, "weight", 1L, 1L, limits.maxWeight());
+        RewardGrantMode grantMode = parseEnum(
+                RewardGrantMode.class, section.getString("grant-mode", "weighted"), "grant-mode");
+        long weight = grantMode == RewardGrantMode.WEIGHTED
+                ? ConfigValues.longOrDefault(section, "weight", 1L, 1L, limits.maxWeight())
+                : 0L;
         int amountLimit = type == RewardType.ITEM
                 ? limits.maxItemAmountPerGrant()
                 : limits.maxCommandExecutionsPerGrant();
@@ -264,6 +289,7 @@ public final class RewardRepository {
         return new RewardEntry(
                 id,
                 type,
+                grantMode,
                 weight,
                 min,
                 max,
@@ -274,6 +300,43 @@ public final class RewardRepository {
                 parseEnum(RewardDelivery.class, section.getString("delivery", "ground"), "delivery"),
                 command,
                 parseEnum(CommandExecutorType.class, section.getString("executor", "console"), "executor"));
+    }
+
+    private FirstDefeatRewardConfig parseFirstDefeat(
+            ConfigurationSection yaml,
+            String path,
+            Map<String, DropGroup> groups,
+            File file,
+            boolean killerOnly) {
+        if (!yaml.getBoolean(path + ".enabled", false)) {
+            return FirstDefeatRewardConfig.disabled();
+        }
+        FirstDefeatScope scope = parseEnum(
+                FirstDefeatScope.class, yaml.getString(path + ".scope", "player"), path + ".scope");
+        FirstDefeatRecipient recipient = parseEnum(
+                FirstDefeatRecipient.class,
+                yaml.getString(path + ".recipient", "killer"), path + ".recipient");
+        if (killerOnly && recipient != FirstDefeatRecipient.KILLER) {
+            throw new IllegalArgumentException(file.getName() + " 普通 MythicMob 首次奖励只能发给击杀者");
+        }
+        List<RewardEntryRef> entries = new ArrayList<>();
+        for (Map<?, ?> raw : yaml.getMapList(path + ".entries")) {
+            String groupId = String.valueOf(raw.get("group"));
+            String entryId = String.valueOf(raw.get("entry"));
+            DropGroup group = groups.get(groupId);
+            RewardEntry entry = group == null ? null : group.entries().stream()
+                    .filter(candidate -> candidate.id().equals(entryId)).findFirst().orElse(null);
+            if (entry == null) {
+                throw new IllegalArgumentException(file.getName() + " 引用了不存在的首次奖励: "
+                        + groupId + "/" + entryId);
+            }
+            if (entry.grantMode() != RewardGrantMode.FIRST_DEFEAT) {
+                throw new IllegalArgumentException(file.getName() + " 引用的奖励不是 first-defeat 模式: "
+                        + groupId + "/" + entryId);
+            }
+            entries.add(new RewardEntryRef(groupId, entryId));
+        }
+        return new FirstDefeatRewardConfig(true, scope, recipient, entries);
     }
 
     private static Map<String, String> readLocalized(ConfigurationSection section, String path, String fallback) {

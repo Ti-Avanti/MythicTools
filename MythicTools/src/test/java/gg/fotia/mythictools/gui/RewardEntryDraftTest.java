@@ -62,11 +62,38 @@ class RewardEntryDraftTest {
         RewardEntryDraft command = RewardEntryDraft.create("command", "legendary");
 
         assertEquals(100L, item.value("weight"));
+        assertEquals("weighted", item.value("grant-mode"));
         assertEquals("ground", item.value("delivery"));
         assertEquals("custom-tier", item.value("rarity"));
         assertEquals("legendary", command.value("rarity"));
         assertEquals("console", command.value("executor"));
         assertEquals("say Reward for {player}", command.value("command"));
+    }
+
+    @Test
+    void hidesWeightWhenRewardIsGuaranteedForFirstDefeat() {
+        RewardEntryDraft draft = RewardEntryDraft.create("item", "common");
+
+        draft.set("grant-mode", "first-defeat");
+
+        assertTrueContains(draft.fields(), "grant-mode");
+        assertFalse(draft.fields().contains("weight"));
+        draft.set("grant-mode", "weighted");
+        assertTrueContains(draft.fields(), "weight");
+    }
+
+    @Test
+    void suppliesEditableWeightWhenFirstDefeatRewardReturnsToWeightedMode() {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("entries.reward.type", "command");
+        yaml.set("entries.reward.grant-mode", "first-defeat");
+        yaml.set("entries.reward.command", "say first");
+
+        RewardEntryDraft draft = RewardEntryDraft.load(yaml, "entries.reward");
+        draft.set("grant-mode", "weighted");
+
+        assertEquals(100L, draft.value("weight"));
+        assertTrueContains(draft.fields(), "weight");
     }
 
     @Test

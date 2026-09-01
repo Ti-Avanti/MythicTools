@@ -6,8 +6,12 @@ import gg.fotia.mythictools.reward.MobDropRule;
 import gg.fotia.mythictools.reward.RewardRepository;
 import gg.fotia.mythictools.reward.RewardService;
 import gg.fotia.mythictools.reward.WeightedRewardSelector;
+import gg.fotia.mythictools.reward.FirstDefeatRewardService;
+import gg.fotia.mythictools.reward.FirstDefeatSource;
+import gg.fotia.mythictools.reward.RewardRecipient;
 import io.lumine.mythic.bukkit.events.MythicMobDeathEvent;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,6 +30,7 @@ public final class DropListener implements Listener {
     private final RewardRepository repository;
     private final WeightedRewardSelector selector;
     private final RewardService rewards;
+    private final FirstDefeatRewardService firstDefeatRewards;
     private final Function<UUID, Optional<BossDropAction>> bossDropAction;
 
     public DropListener(
@@ -33,11 +38,13 @@ public final class DropListener implements Listener {
             RewardRepository repository,
             WeightedRewardSelector selector,
             RewardService rewards,
+            FirstDefeatRewardService firstDefeatRewards,
             Function<UUID, Optional<BossDropAction>> bossDropAction) {
         this.mythicMobs = mythicMobs;
         this.repository = repository;
         this.selector = selector;
         this.rewards = rewards;
+        this.firstDefeatRewards = firstDefeatRewards;
         this.bossDropAction = bossDropAction;
     }
 
@@ -87,6 +94,12 @@ public final class DropListener implements Listener {
                             "player", recipientName,
                             "mob", rule.mobId(),
                             "location", formatLocation(location)));
+            if (killer != null && rule.firstDefeatRewards().enabled()) {
+                firstDefeatRewards.award(
+                        FirstDefeatSource.mob(rule.mobId()), rule.firstDefeatRewards(),
+                        List.of(new RewardRecipient(killer.getUniqueId(), killer.getName(), killer)),
+                        location, Map.of("mob", rule.mobId(), "location", formatLocation(location)), false);
+            }
         });
     }
 

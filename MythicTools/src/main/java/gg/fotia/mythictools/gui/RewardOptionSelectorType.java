@@ -9,7 +9,10 @@ enum RewardOptionSelectorType {
             new Option("inventory", 'i'))),
     EXECUTOR("executor", List.of(
             new Option("console", 'c'),
-            new Option("player", 'p')));
+            new Option("player", 'p'))),
+    GRANT_MODE("grant-mode", List.of(
+            new Option("weighted", 'w'),
+            new Option("first-defeat", 'f')));
 
     private final String field;
     private final List<Option> options;

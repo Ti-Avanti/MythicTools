@@ -1,0 +1,26 @@
+title-key: gui.first-defeat-list.title
+Layout:
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#########'
+  - '#p#a#b#n#'
+items:
+  e:
+    material: NETHER_STAR
+    display-name-key: gui.first-defeat-list.entry-name
+    lore-keys: [gui.first-defeat-list.entry-lore]
+  a:
+    material: EMERALD
+    display-name-key: gui.first-defeat-list.add-name
+    lore-keys: [gui.first-defeat-list.add-lore]
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.first-defeat.back-name
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name

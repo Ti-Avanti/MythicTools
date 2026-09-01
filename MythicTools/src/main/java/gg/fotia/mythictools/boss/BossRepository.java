@@ -16,6 +16,12 @@ import gg.fotia.mythictools.config.YamlFiles;
 import gg.fotia.mythictools.integration.MythicMobGateway;
 import gg.fotia.mythictools.reward.RewardRepository;
 import gg.fotia.mythictools.reward.RewardSnapshot;
+import gg.fotia.mythictools.reward.FirstDefeatRecipient;
+import gg.fotia.mythictools.reward.FirstDefeatRewardConfig;
+import gg.fotia.mythictools.reward.FirstDefeatScope;
+import gg.fotia.mythictools.reward.RewardEntry;
+import gg.fotia.mythictools.reward.RewardEntryRef;
+import gg.fotia.mythictools.reward.RewardGrantMode;
 import gg.fotia.mythictools.version.BiomeKeys;
 import java.io.File;
 import java.io.IOException;
@@ -344,7 +350,37 @@ public final class BossRepository implements BossConfigView {
                 ranks,
                 yaml.getBoolean("rewards.damage-ranking.chat-display", true),
                 killerEnabled,
-                killerRewards);
+                killerRewards,
+                parseFirstDefeatRewards(yaml, file, candidateRewards));
+    }
+
+    private FirstDefeatRewardConfig parseFirstDefeatRewards(
+            ConfigurationSection yaml,
+            File file,
+            RewardSnapshot candidateRewards) {
+        String path = "rewards.first-defeat";
+        if (!yaml.getBoolean(path + ".enabled", false)) {
+            return FirstDefeatRewardConfig.disabled();
+        }
+        FirstDefeatScope scope = parseEnum(
+                FirstDefeatScope.class, yaml.getString(path + ".scope", "player"), path + ".scope");
+        FirstDefeatRecipient recipient = parseEnum(
+                FirstDefeatRecipient.class,
+                yaml.getString(path + ".recipient", "killer"), path + ".recipient");
+        List<RewardEntryRef> entries = new ArrayList<>();
+        for (Map<?, ?> raw : yaml.getMapList(path + ".entries")) {
+            String groupId = String.valueOf(raw.get("group"));
+            String entryId = String.valueOf(raw.get("entry"));
+            RewardEntry entry = candidateRewards.entry(groupId, entryId).orElseThrow(() ->
+                    new IllegalArgumentException(file.getName() + " 引用了不存在的首次奖励: "
+                            + groupId + "/" + entryId));
+            if (entry.grantMode() != RewardGrantMode.FIRST_DEFEAT) {
+                throw new IllegalArgumentException(file.getName() + " 引用的奖励不是 first-defeat 模式: "
+                        + groupId + "/" + entryId);
+            }
+            entries.add(new RewardEntryRef(groupId, entryId));
+        }
+        return new FirstDefeatRewardConfig(true, scope, recipient, entries);
     }
 
     private List<GroupReward> parseGroupRewards(
@@ -377,6 +413,14 @@ public final class BossRepository implements BossConfigView {
                             + settings.safetyLimits().maxBossSelectionsPerRecipient());
         }
         return (int) total;
+    }
+
+    private static <E extends Enum<E>> E parseEnum(Class<E> type, String value, String field) {
+        try {
+            return Enum.valueOf(type, value.toUpperCase(Locale.ROOT).replace('-', '_'));
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException(field + " 的值无效: " + value, exception);
+        }
     }
 
     private static BossBroadcast parseBroadcast(ConfigurationSection yaml, String path) {

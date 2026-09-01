@@ -3,6 +3,9 @@ package gg.fotia.mythictools.boss;
 import gg.fotia.mythictools.integration.MythicMobGateway;
 import gg.fotia.mythictools.lang.LocaleService;
 import gg.fotia.mythictools.reward.RewardGrant;
+import gg.fotia.mythictools.reward.FirstDefeatRewardService;
+import gg.fotia.mythictools.reward.FirstDefeatSource;
+import gg.fotia.mythictools.reward.RewardRecipient;
 import gg.fotia.mythictools.reward.RewardService;
 import gg.fotia.mythictools.reward.WeightedRewardSelector;
 import gg.fotia.mythictools.runtime.BukkitTaskScheduler;
@@ -54,6 +57,7 @@ public final class BossManager implements Listener {
     private final SpawnLocationFinder locationFinder;
     private final WeightedRewardSelector selector;
     private final RewardService rewards;
+    private final FirstDefeatRewardService firstDefeatRewards;
     private final LocaleService locales;
     private final MessageRenderer messages;
     private final boolean enabled;
@@ -71,10 +75,12 @@ public final class BossManager implements Listener {
             SpawnLocationFinder locationFinder,
             WeightedRewardSelector selector,
             RewardService rewards,
+            FirstDefeatRewardService firstDefeatRewards,
             LocaleService locales,
             MessageRenderer messages,
             boolean enabled) {
-        this(plugin, repository, mythicMobs, locationFinder, selector, rewards, locales, messages, enabled,
+        this(plugin, repository, mythicMobs, locationFinder, selector, rewards, firstDefeatRewards,
+                locales, messages, enabled,
                 new OwnedTasks(new BukkitTaskScheduler(plugin)));
     }
 
@@ -85,6 +91,7 @@ public final class BossManager implements Listener {
             SpawnLocationFinder locationFinder,
             WeightedRewardSelector selector,
             RewardService rewards,
+            FirstDefeatRewardService firstDefeatRewards,
             LocaleService locales,
             MessageRenderer messages,
             boolean enabled,
@@ -95,6 +102,7 @@ public final class BossManager implements Listener {
         this.locationFinder = locationFinder;
         this.selector = selector;
         this.rewards = rewards;
+        this.firstDefeatRewards = firstDefeatRewards;
         this.locales = locales;
         this.messages = messages;
         this.enabled = enabled;
@@ -381,12 +389,37 @@ public final class BossManager implements Listener {
                 rewards.deliver(playerId, name, online, entry.getValue(), location,
                         Map.of("boss", fight.config.id(), "player", name, "location", formatLocation(location)), true);
             }
+            awardFirstDefeat(fight, location, killer);
         }
         broadcast(fight.config, fight.config.deathBroadcast(), location, killer);
         if (fight.config.lootPolicy().awardsMythicToolsRewardsOnFinalDeath()
                 && fight.config.rewards().rankingChatEnabled()) {
             showRanking(fight, ranking, awarded);
         }
+    }
+
+    private void awardFirstDefeat(BossFight fight, Location location, Player killer) {
+        var config = fight.config.rewards().firstDefeatRewards();
+        if (!config.enabled() || killer == null) {
+            return;
+        }
+        List<RewardRecipient> recipients = BossFirstDefeatRecipients.select(
+                        config.scope(), config.recipient(), fight.damage, killer.getUniqueId()).stream()
+                .map(playerId -> {
+                    Player online = Bukkit.getPlayer(playerId);
+                    OfflinePlayer offline = Bukkit.getOfflinePlayer(playerId);
+                    String name = fight.playerNames.getOrDefault(playerId,
+                            offline.getName() == null ? playerId.toString() : offline.getName());
+                    return new RewardRecipient(playerId, name, online);
+                }).toList();
+        firstDefeatRewards.award(
+                FirstDefeatSource.boss(fight.config.id()), config, recipients, location,
+                Map.of("boss", fight.config.id(), "location", formatLocation(location)), true)
+                .exceptionally(failure -> {
+                    plugin.getLogger().log(Level.SEVERE,
+                            "Boss 首次击败奖励发放失败: " + fight.config.id(), failure);
+                    return null;
+                });
     }
 
     private List<RewardGrant> grantsFor(List<GroupReward> groups) {

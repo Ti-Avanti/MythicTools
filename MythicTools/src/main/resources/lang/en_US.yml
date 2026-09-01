@@ -96,6 +96,9 @@ gui:
     mob-drop-groups:
       name: "Drop Group Assignment"
       lore: "Groups, weights and selection amounts"
+    mob-drop-first-defeat:
+      name: "First Defeat Rewards"
+      lore: "Guaranteed per-player or server-first rewards"
     drop-item-rewards:
       name: "Item Rewards"
       lore: "Capture inventory items and edit reward properties"
@@ -126,6 +129,9 @@ gui:
     boss-killer-rewards:
       name: "Killer Rewards"
       lore: "Rewards for the final-kill player"
+    boss-first-defeat:
+      name: "First Defeat Rewards"
+      lore: "Guaranteed per-player or server-first rewards"
     mob-group-amount:
       name: "Basics & Spawn Amount"
       lore: "Minimum and maximum weighted draws per successful spawn"
@@ -360,6 +366,7 @@ gui:
     title: "<!i><gold>Select {mode}: <white>{id}"
     delivery-label: "Delivery"
     executor-label: "Executor"
+    grant-mode-label: "Grant Mode"
     ground-name: "<!i><green>Drop on Ground"
     ground-lore: "<!i><gray>Spawn the reward item at the kill location"
     inventory-name: "<!i><aqua>Place in Inventory"
@@ -368,10 +375,42 @@ gui:
     console-lore: "<!i><gray>Execute the reward command as the server console"
     player-name: "<!i><light_purple>Run as Player"
     player-lore: "<!i><gray>Execute the reward command as the rewarded player"
+    weighted-name: "<!i><gold>Weighted Reward"
+    weighted-lore: "<!i><gray>Participates in repeatable weighted selection"
+    first-defeat-name: "<!i><light_purple>First Defeat Only"
+    first-defeat-lore: "<!i><gray>Excluded from random selection and granted by first-defeat rules"
     option-lore: "<!i>{status}"
     selected: "<!i><green>Currently selected"
     choose: "<!i><yellow>Click to select"
     back-name: "<!i><gray>Back to Reward Editor"
+  first-defeat:
+    title: "<!i><gold>First Defeat Rewards: <white>{id}"
+    enabled-name: "<!i><green>Enabled"
+    enabled-lore: "<!i><gray>Current: <white>{enabled}</white>\n<!i><yellow>Click to toggle"
+    scope-name: "<!i><aqua>Claim Scope"
+    scope-lore: "<!i><gray>Current: <white>{scope}</white>\n<!i><yellow>Click to switch player/server"
+    recipient-name: "<!i><yellow>Recipients"
+    recipient-lore: "<!i><gray>Current: <white>{recipient}</white>\n<!i><yellow>Click to switch killer/participants"
+    rewards-name: "<!i><light_purple>Manage Guaranteed Rewards"
+    rewards-lore: "<!i><gray>Configured: <white>{amount}</white>\n<!i><yellow>Click to open the reward list"
+    back-name: "<!i><gray>Back to categories"
+    empty: "<!i><red>Add at least one first-defeat reward before enabling"
+    scope:
+      player: "Once per player"
+      server: "Once per server"
+    recipient:
+      killer: "Final killer"
+      participants: "All damage participants"
+  first-defeat-list:
+    title: "<!i><gold>Guaranteed First Rewards: <white>{id} <gray>Page {page}"
+    entry-name: "<!i><light_purple>{reward}"
+    entry-lore: "<!i><gray>Group: <white>{group}</white>\n<!i><gray>Reward ID: <white>{entry}</white>\n<!i><red>Shift-right-click to remove"
+    add-name: "<!i><green>Add Guaranteed Reward"
+    add-lore: "<!i><gray>Select a first-defeat-only reward"
+  first-defeat-selector:
+    title: "<!i><gold>Select First Reward: <white>{id} <gray>Page {page}"
+    entry-name: "<!i><light_purple>{reward}"
+    entry-lore: "<!i><gray>Group: <white>{group}</white>\n<!i><gray>Reward ID: <white>{entry}</white>\n<!i><yellow>Click to add"
   editor:
     title: "<!i><gold>Edit {type}: <white>{id}"
     unset-value: "Not set"
@@ -467,6 +506,7 @@ gui:
       radius: "Radius"
       ranks: "Ranks"
       rarity: "Rarity"
+      grant-mode: "Grant Mode"
       rewards: "Rewards"
       rules: "Rules"
       spawn: "Spawn"

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import gg.fotia.mythictools.reward.FirstDefeatRewardConfig;
 import org.junit.jupiter.api.Test;
 
 class BossManagerLifecycleTest {
@@ -32,6 +33,8 @@ class BossManagerLifecycleTest {
         return new BossConfig(
                 "boss", Map.of("zh_CN", "Boss"), BossPhaseMode.DEATH_RESPAWN,
                 List.of(new BossPhase("TestBoss", 1.0)), null, BossLootPolicy.legacy(), List.of(),
-                empty, empty, new BossRewardConfig(false, 1, Map.of(), false, false, List.of()));
+                empty, empty, new BossRewardConfig(
+                        false, 1, Map.of(), false, false, List.of(),
+                        FirstDefeatRewardConfig.disabled()));
     }
 }

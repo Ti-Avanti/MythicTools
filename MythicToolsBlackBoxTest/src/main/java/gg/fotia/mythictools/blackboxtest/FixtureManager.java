@@ -27,7 +27,7 @@ import org.bukkit.scheduler.BukkitTask;
 final class FixtureManager {
     private static final List<String> DROP_MODES = List.of(
             "drops-ground", "drops-inventory", "drops-console", "drops-player",
-            "drops-max", "drops-weighted");
+            "drops-max", "drops-weighted", "drops-first-player", "drops-first-server");
     private static final List<String> POINT_MODES = List.of(
             "spawn-point", "spawn-point-auto", "spawn-point-amount",
             "spawn-point-death", "spawn-point-despawn");
@@ -41,7 +41,8 @@ final class FixtureManager {
             "boss-point-time-window", "boss-point-online-blocked", "boss-biome-online-blocked",
             "boss-phase-respawn", "boss-native", "boss-loot-intermediate-none",
             "boss-loot-intermediate-mythic", "boss-loot-mythictools-only",
-            "boss-loot-mythic-only", "boss-loot-combined");
+            "boss-loot-mythic-only", "boss-loot-combined",
+            "boss-first-player", "boss-first-server");
     private static final List<String> PREPARED_RELOAD_MODES = List.of(
             "valid-reload", "invalid-reload", "limit-overflow", "reward-overflow");
     private static final List<String> ACTION_ONLY_MODES = List.of(
@@ -147,7 +148,20 @@ final class FixtureManager {
     private void writeDropFixture(String mode) throws IOException {
         String groupId = "qa-" + mode.substring("drops-".length());
         YamlConfiguration group = new YamlConfiguration();
-        if (mode.equals("drops-weighted")) {
+        boolean firstDefeat = mode.startsWith("drops-first-");
+        if (firstDefeat) {
+            group.set("entries.reward.type", "item");
+            group.set("entries.reward.grant-mode", "first-defeat");
+            group.set("entries.reward.material", "NETHER_STAR");
+            group.set("entries.reward.min-amount", 1);
+            group.set("entries.reward.max-amount", 1);
+            group.set("entries.reward.rarity", "epic");
+            group.set("entries.reward.delivery", "inventory");
+            group.set("entries.reward.display.zh_CN", "<!i><light_purple>QA 首次击败奖励");
+            group.set("entries.reward.display.en_US", "<!i><light_purple>QA First Defeat Reward");
+            group.set("entries.reward.message.zh_CN", "<!i><green>MTQA_FIRST_DEFEAT {reward}");
+            group.set("entries.reward.message.en_US", "<!i><green>MTQA_FIRST_DEFEAT {reward}");
+        } else if (mode.equals("drops-weighted")) {
             writeCommandEntry(group, "entries.low", "mttest mark weighted-low", 1, "console", 1);
             writeCommandEntry(group, "entries.high", "mttest mark weighted-high", 3, "console", 1);
         } else if (mode.equals("drops-console") || mode.equals("drops-player")) {
@@ -180,6 +194,14 @@ final class FixtureManager {
                 "weight", 1,
                 "min-amount", mode.equals("drops-max") ? 2 : 1,
                 "max-amount", mode.equals("drops-max") ? 2 : 1)));
+        if (firstDefeat) {
+            mob.set("first-defeat.enabled", true);
+            mob.set("first-defeat.scope", mode.equals("drops-first-server") ? "server" : "player");
+            mob.set("first-defeat.recipient", "killer");
+            mob.set("first-defeat.entries", List.of(Map.of(
+                    "group", groupId,
+                    "entry", "reward")));
+        }
         save(mob, new File(target.getDataFolder(), "drops/mobs/MTQA_DropMob.yml"));
     }
 
@@ -351,6 +373,14 @@ final class FixtureManager {
         yaml.set("rewards.damage-ranking.ranks.1", List.of(Map.of("group", "qa-inventory", "copies", 1)));
         yaml.set("rewards.killer.enabled", true);
         yaml.set("rewards.killer.groups", List.of(Map.of("group", "qa-inventory", "copies", 1)));
+        if (mode.startsWith("boss-first-")) {
+            yaml.set("rewards.first-defeat.enabled", true);
+            yaml.set("rewards.first-defeat.scope", mode.equals("boss-first-server") ? "server" : "player");
+            yaml.set("rewards.first-defeat.recipient", "killer");
+            yaml.set("rewards.first-defeat.entries", List.of(Map.of(
+                    "group", "qa-inventory",
+                    "entry", "first")));
+        }
         save(yaml, new File(target.getDataFolder(), "bosses/qa-boss.yml"));
     }
 
@@ -375,7 +405,8 @@ final class FixtureManager {
             yaml.set("mythic-native.level", 1.0);
             return;
         }
-        if (mode.equals("boss-phase-respawn") || mode.startsWith("boss-loot-")) {
+        if (mode.equals("boss-phase-respawn") || mode.startsWith("boss-loot-")
+                || mode.startsWith("boss-first-")) {
             yaml.set("phase-mode", "death-respawn");
         }
         if (mode.equals("boss-invalid")) {
@@ -383,7 +414,8 @@ final class FixtureManager {
             return;
         }
         boolean singleFinalStage = mode.equals("boss-loot-mythictools-only")
-                || mode.equals("boss-loot-mythic-only") || mode.equals("boss-loot-combined");
+                || mode.equals("boss-loot-mythic-only") || mode.equals("boss-loot-combined")
+                || mode.startsWith("boss-first-");
         yaml.set("phases", singleFinalStage
                 ? List.of(Map.of("mob", "MTQA_BossPhase1", "level", 1.0))
                 : List.of(
@@ -423,6 +455,17 @@ final class FixtureManager {
         group.set("entries.reward.display.en_US", "<!i><green>QA Boss Reward");
         group.set("entries.reward.message.zh_CN", "<!i><green>MTQA_BOSS_REWARD x{amount}");
         group.set("entries.reward.message.en_US", "<!i><green>MTQA_BOSS_REWARD x{amount}");
+        group.set("entries.first.type", "item");
+        group.set("entries.first.grant-mode", "first-defeat");
+        group.set("entries.first.material", "NETHER_STAR");
+        group.set("entries.first.min-amount", 1);
+        group.set("entries.first.max-amount", 1);
+        group.set("entries.first.rarity", "epic");
+        group.set("entries.first.delivery", "inventory");
+        group.set("entries.first.display.zh_CN", "<!i><light_purple>QA Boss 首次击败奖励");
+        group.set("entries.first.display.en_US", "<!i><light_purple>QA Boss First Defeat Reward");
+        group.set("entries.first.message.zh_CN", "<!i><green>MTQA_BOSS_FIRST_DEFEAT");
+        group.set("entries.first.message.en_US", "<!i><green>MTQA_BOSS_FIRST_DEFEAT");
         save(group, new File(target.getDataFolder(), "drops/groups/qa-inventory.yml"));
     }
 

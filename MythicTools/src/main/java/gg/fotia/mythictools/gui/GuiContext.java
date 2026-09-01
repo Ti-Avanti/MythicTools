@@ -2,6 +2,7 @@ package gg.fotia.mythictools.gui;
 
 import gg.fotia.mythictools.config.SafetyLimits;
 import gg.fotia.mythictools.reward.Rarity;
+import gg.fotia.mythictools.reward.FirstDefeatRewardOption;
 import gg.fotia.mythictools.runtime.OwnedTasks;
 import gg.fotia.mythictools.text.MessageRenderer;
 import java.util.List;
@@ -25,6 +26,7 @@ final class GuiContext {
     final Supplier<List<String>> loadedMobGroupIds;
     final Supplier<List<String>> loadedDropGroupIds;
     final Supplier<List<Rarity>> configuredRarities;
+    final Supplier<List<FirstDefeatRewardOption>> firstDefeatRewardOptions;
     final Function<Player, String> playerLocale;
     final SafetyLimits safetyLimits;
     final OwnedTasks tasks;
@@ -43,6 +45,7 @@ final class GuiContext {
     BossRewardGuiController bossRewards;
     BossSpawnerGuiController bossSpawners;
     BossScheduleGuiController bossSchedules;
+    FirstDefeatGuiController firstDefeats;
 
     GuiContext(
             JavaPlugin plugin,
@@ -56,6 +59,7 @@ final class GuiContext {
             Supplier<List<String>> loadedMobGroupIds,
             Supplier<List<String>> loadedDropGroupIds,
             Supplier<List<Rarity>> configuredRarities,
+            Supplier<List<FirstDefeatRewardOption>> firstDefeatRewardOptions,
             Function<Player, String> playerLocale,
             SafetyLimits safetyLimits,
             OwnedTasks tasks) {
@@ -70,6 +74,7 @@ final class GuiContext {
         this.loadedMobGroupIds = loadedMobGroupIds;
         this.loadedDropGroupIds = loadedDropGroupIds;
         this.configuredRarities = configuredRarities;
+        this.firstDefeatRewardOptions = firstDefeatRewardOptions;
         this.playerLocale = playerLocale;
         this.safetyLimits = safetyLimits;
         this.tasks = tasks;
@@ -90,7 +95,8 @@ final class GuiContext {
             BossPhaseGuiController bossPhases,
             BossRewardGuiController bossRewards,
             BossSpawnerGuiController bossSpawners,
-            BossScheduleGuiController bossSchedules) {
+            BossScheduleGuiController bossSchedules,
+            FirstDefeatGuiController firstDefeats) {
         this.core = core;
         this.selector = selector;
         this.rewards = rewards;
@@ -100,5 +106,6 @@ final class GuiContext {
         this.bossRewards = bossRewards;
         this.bossSpawners = bossSpawners;
         this.bossSchedules = bossSchedules;
+        this.firstDefeats = firstDefeats;
     }
 }

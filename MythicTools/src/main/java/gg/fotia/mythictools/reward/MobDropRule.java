@@ -8,8 +8,12 @@ public record MobDropRule(
         int maxDrops,
         int minExperience,
         int maxExperience,
-        List<DropGroupRef> groups) {
+        List<DropGroupRef> groups,
+        FirstDefeatRewardConfig firstDefeatRewards) {
     public MobDropRule {
         groups = List.copyOf(groups);
+        if (firstDefeatRewards == null) {
+            firstDefeatRewards = FirstDefeatRewardConfig.disabled();
+        }
     }
 }

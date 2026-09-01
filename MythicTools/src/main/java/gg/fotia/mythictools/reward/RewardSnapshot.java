@@ -35,6 +35,11 @@ public final class RewardSnapshot {
         return Optional.ofNullable(groups.get(id));
     }
 
+    public Optional<RewardEntry> entry(String groupId, String entryId) {
+        return group(groupId).flatMap(group -> group.entries().stream()
+                .filter(entry -> entry.id().equals(entryId)).findFirst());
+    }
+
     public Optional<MobDropRule> mobRule(String id) {
         return Optional.ofNullable(mobRules.get(id));
     }
@@ -59,7 +64,8 @@ public final class RewardSnapshot {
         List<RewardEntry> entries = new ArrayList<>();
         for (RewardEntry entry : value.entries()) {
             entries.add(new RewardEntry(
-                    entry.id(), entry.type(), entry.weight(), entry.minAmount(), entry.maxAmount(),
+                    entry.id(), entry.type(), entry.grantMode(), entry.weight(),
+                    entry.minAmount(), entry.maxAmount(),
                     entry.rarityId(), orderedMap(entry.displays()), orderedMap(entry.messages()),
                     entry.item(), entry.delivery(), entry.command(), entry.commandExecutor()));
         }
@@ -68,7 +74,8 @@ public final class RewardSnapshot {
 
     private static MobDropRule copyMobRule(MobDropRule value) {
         return new MobDropRule(
-                value.mobId(), value.maxDrops(), value.minExperience(), value.maxExperience(), value.groups());
+                value.mobId(), value.maxDrops(), value.minExperience(), value.maxExperience(), value.groups(),
+                value.firstDefeatRewards());
     }
 
     private static <T> Map<String, T> immutableCopy(

@@ -260,6 +260,11 @@ final class CoreGuiController {
             } else if (session.type == AdminType.MOB_DROP
                     && category == EditorCategory.MOB_DROP_GROUPS) {
                 context.mobDropGroups.openMobDropGroupList(player, session, 0);
+            } else if ((session.type == AdminType.MOB_DROP
+                    && category == EditorCategory.MOB_DROP_FIRST_DEFEAT)
+                    || (session.type == AdminType.BOSS
+                    && category == EditorCategory.BOSS_FIRST_DEFEAT)) {
+                context.firstDefeats.openMenu(player, session);
             } else if (session.type == AdminType.BOSS
                     && category == EditorCategory.BOSS_POINT_SCHEDULE) {
                 context.bossSchedules.openBossPointScheduleList(player, session, 0);

@@ -1,0 +1,26 @@
+title-key: gui.first-defeat.title
+Layout:
+  - '#########'
+  - '#e#s#r#l#'
+  - '#########'
+  - '####b####'
+items:
+  e:
+    material: LEVER
+    display-name-key: gui.first-defeat.enabled-name
+    lore-keys: [gui.first-defeat.enabled-lore]
+  s:
+    material: PLAYER_HEAD
+    display-name-key: gui.first-defeat.scope-name
+    lore-keys: [gui.first-defeat.scope-lore]
+  r:
+    material: DIAMOND_SWORD
+    display-name-key: gui.first-defeat.recipient-name
+    lore-keys: [gui.first-defeat.recipient-lore]
+  l:
+    material: CHEST
+    display-name-key: gui.first-defeat.rewards-name
+    lore-keys: [gui.first-defeat.rewards-lore]
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.first-defeat.back-name

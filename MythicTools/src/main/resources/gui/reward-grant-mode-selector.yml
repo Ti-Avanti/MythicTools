@@ -1,0 +1,18 @@
+title-key: gui.reward-option-selector.title
+Layout:
+  - '#########'
+  - '##w###f##'
+  - '#########'
+  - '####b####'
+items:
+  w:
+    material: CHEST
+    display-name-key: gui.reward-option-selector.weighted-name
+    lore-keys: [gui.reward-option-selector.weighted-lore, gui.reward-option-selector.option-lore]
+  f:
+    material: NETHER_STAR
+    display-name-key: gui.reward-option-selector.first-defeat-name
+    lore-keys: [gui.reward-option-selector.first-defeat-lore, gui.reward-option-selector.option-lore]
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.reward-option-selector.back-name

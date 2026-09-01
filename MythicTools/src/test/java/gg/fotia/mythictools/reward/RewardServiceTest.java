@@ -185,6 +185,7 @@ class RewardServiceTest {
         return new RewardEntry(
                 "diamond",
                 RewardType.ITEM,
+                RewardGrantMode.WEIGHTED,
                 1,
                 1,
                 64,

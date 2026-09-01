@@ -22,4 +22,4 @@ commands:
 permissions:
   mythictoolsblackboxtest.use:
     description: 使用 MythicTools 黑盒测试辅助命令
-    default: op
+    default: true

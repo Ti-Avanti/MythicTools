@@ -7,6 +7,7 @@ import org.bukkit.inventory.ItemStack;
 public record RewardEntry(
         String id,
         RewardType type,
+        RewardGrantMode grantMode,
         long weight,
         int minAmount,
         int maxAmount,

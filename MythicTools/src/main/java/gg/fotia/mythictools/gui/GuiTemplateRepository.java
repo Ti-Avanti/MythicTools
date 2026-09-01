@@ -30,6 +30,8 @@ public final class GuiTemplateRepository {
                 "main", "list", "category", "editor", "section-editor", "reward-list",
                 "item-reward-editor", "command-reward-editor", "drops-menu", "spawning-menu",
                 "reward-rarity-selector", "reward-option-selector",
+                "reward-grant-mode-selector", "first-defeat-menu",
+                "first-defeat-reward-list", "first-defeat-reward-selector",
                 "mob-member-list", "mob-member-editor",
                 "mob-drop-group-list", "mob-drop-group-editor",
                 "boss-phase-list", "boss-phase-editor", "boss-point-schedule-list",

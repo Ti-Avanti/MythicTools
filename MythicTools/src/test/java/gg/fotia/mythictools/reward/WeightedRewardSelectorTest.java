@@ -51,7 +51,8 @@ class WeightedRewardSelectorTest {
     @Test
     void selectsLegalItemAmountWhoseMaximumIsIntegerMaximum() {
         RewardEntry huge = new RewardEntry(
-                "huge", RewardType.ITEM, 1L, 1, Integer.MAX_VALUE, "common",
+                "huge", RewardType.ITEM, RewardGrantMode.WEIGHTED, 1L,
+                1, Integer.MAX_VALUE, "common",
                 Map.of("zh_CN", "huge"), Map.of(), null, RewardDelivery.GROUND,
                 null, CommandExecutorType.CONSOLE);
         Map<String, DropGroup> groups = new LinkedHashMap<>();
@@ -72,9 +73,32 @@ class WeightedRewardSelectorTest {
         org.junit.jupiter.api.Assertions.assertTrue(grant.amount() <= Integer.MAX_VALUE);
     }
 
+    @Test
+    void excludesFirstDefeatEntriesFromWeightedSelectionAndGrantsThemDirectly() {
+        RewardEntry weighted = entry("weighted", 1L);
+        RewardEntry firstDefeat = new RewardEntry(
+                "first", RewardType.COMMAND, RewardGrantMode.FIRST_DEFEAT, 0L,
+                1, 1, "common", Map.of("zh_CN", "first"), Map.of(), null, null,
+                "say first", CommandExecutorType.CONSOLE);
+        Map<String, DropGroup> groups = new LinkedHashMap<>();
+        groups.put("mixed", new DropGroup("mixed", List.of(firstDefeat, weighted)));
+        RepositorySnapshotStore store = new RepositorySnapshotStore();
+        store.publish(store.current().withRewards(new RewardSnapshot(Map.of(), groups, Map.of())));
+        RewardRepository repository = new RewardRepository(
+                new RepositoryLoadContext(
+                        dataFolder.toFile(), Logger.getLogger("WeightedRewardSelectorTest"),
+                        ignored -> true, ignored -> null),
+                store);
+        WeightedRewardSelector selector = new WeightedRewardSelector(repository);
+
+        assertEquals("weighted", selector.selectGroup("mixed", 1).get(0).entry().id());
+        assertEquals("first", selector.selectFirstDefeat(
+                List.of(new RewardEntryRef("mixed", "first"))).get(0).entry().id());
+    }
+
     private static RewardEntry entry(String id, long weight) {
         return new RewardEntry(
-                id, RewardType.COMMAND, weight, 1, 1, "common",
+                id, RewardType.COMMAND, RewardGrantMode.WEIGHTED, weight, 1, 1, "common",
                 Map.of("zh_CN", id), Map.of(), null, null,
                 "say test", CommandExecutorType.CONSOLE);
     }

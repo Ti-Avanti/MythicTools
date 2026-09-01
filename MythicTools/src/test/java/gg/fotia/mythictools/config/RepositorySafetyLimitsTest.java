@@ -1,6 +1,7 @@
 package gg.fotia.mythictools.config;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -70,6 +71,67 @@ class RepositorySafetyLimitsTest {
         writeBoss("commands", "1", "3", "1");
 
         coordinator.reload(ConfigLoadMode.STRICT);
+    }
+
+    @Test
+    void loadsExactFirstDefeatRewardsForMobsAndBosses() throws Exception {
+        write("drops/groups/first-clear.yml", """
+                entries:
+                  trophy:
+                    type: command
+                    grant-mode: first-defeat
+                    min-amount: 1
+                    max-amount: 1
+                    rarity: common
+                    command: say first
+                  normal:
+                    type: command
+                    weight: 1
+                    rarity: common
+                    command: say normal
+                """);
+        write("drops/mobs/TestMob.yml", """
+                mob-id: TestMob
+                max-drops: 1
+                groups:
+                  - id: first-clear
+                    weight: 1
+                    min-amount: 0
+                    max-amount: 1
+                first-defeat:
+                  enabled: true
+                  scope: player
+                  entries:
+                    - group: first-clear
+                      entry: trophy
+                """);
+        write("bosses/test.yml", """
+                display: Test
+                phase-mode: death-respawn
+                phases:
+                  - mob: TestMob
+                    level: 1.0
+                rewards:
+                  damage-ranking:
+                    enabled: false
+                    max-recipients: 1
+                  killer:
+                    enabled: false
+                  first-defeat:
+                    enabled: true
+                    scope: server
+                    recipient: killer
+                    entries:
+                      - group: first-clear
+                        entry: trophy
+                """);
+
+        coordinator.reload(ConfigLoadMode.STRICT);
+
+        assertEquals("trophy", store.current().rewards().mobRule("TestMob").orElseThrow()
+                .firstDefeatRewards().entries().get(0).entryId());
+        assertEquals("trophy", store.current().bosses().boss("test").rewards()
+                .firstDefeatRewards().entries().get(0).entryId());
     }
 
     @Test

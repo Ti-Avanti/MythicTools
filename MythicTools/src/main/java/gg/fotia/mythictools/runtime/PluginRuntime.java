@@ -29,10 +29,12 @@ import gg.fotia.mythictools.platform.ServerPlatform;
 import gg.fotia.mythictools.reward.RewardRepository;
 import gg.fotia.mythictools.reward.RewardService;
 import gg.fotia.mythictools.reward.WeightedRewardSelector;
+import gg.fotia.mythictools.reward.FirstDefeatRewardService;
 import gg.fotia.mythictools.spawning.SpawnLocationFinder;
 import gg.fotia.mythictools.spawning.SpawningManager;
 import gg.fotia.mythictools.spawning.SpawningRepository;
 import gg.fotia.mythictools.storage.PendingRewardQueue;
+import gg.fotia.mythictools.storage.FirstDefeatRepository;
 import gg.fotia.mythictools.text.MessageRenderer;
 import gg.fotia.mythictools.version.ServerVersion;
 import java.util.ArrayList;
@@ -110,7 +112,8 @@ public final class PluginRuntime implements ManagedRuntime {
             MythicToolsPlugin plugin,
             FileConfiguration configuration,
             ConfigLoadMode loadMode,
-            PendingRewardQueue pendingRewards) {
+            PendingRewardQueue pendingRewards,
+            FirstDefeatRepository firstDefeats) {
         long started = System.currentTimeMillis();
         PluginSettings settings = PluginSettings.load(configuration);
         ServerVersion serverVersion = ServerVersion.detect();
@@ -141,18 +144,27 @@ public final class PluginRuntime implements ManagedRuntime {
         RewardService rewardService = new RewardService(
                 rewardRepository, pendingRewards, locales, messages, settings,
                 command -> runtimeTasks.execute(command), plugin.getLogger());
+        FirstDefeatRewardService firstDefeatRewardService = new FirstDefeatRewardService(
+                firstDefeats::tryClaim,
+                selector::selectFirstDefeat,
+                (recipient, grants, location, variables, forceInventory) -> rewardService.deliver(
+                        recipient.playerId(), recipient.playerName(), recipient.onlinePlayer(), grants,
+                        location, variables, forceInventory),
+                command -> runtimeTasks.execute(command));
         SpawnLocationFinder locationFinder = new SpawnLocationFinder(settings.spawnLocationAttempts());
         SpawningManager spawningManager = new SpawningManager(
                 spawningRepository, mythicMobs, locationFinder, settings.spawnCheckPeriodTicks(),
                 settings.overrideSpawning(), new OwnedTasks(scheduler));
         BossManager bossManager = new BossManager(
                 plugin, bossRepository, mythicMobs, locationFinder, selector, rewardService,
+                firstDefeatRewardService,
                 locales, messages, settings.overrideBoss(), new OwnedTasks(scheduler));
         PlayerLocaleListener playerLocaleListener = new PlayerLocaleListener(
                 locales, pendingRewards, messages, settings.dropOverflowAtFeet(),
                 command -> runtimeTasks.execute(command), plugin.getLogger());
         DropListener dropListener = new DropListener(
-                mythicMobs, rewardRepository, selector, rewardService, bossManager::dropAction);
+                mythicMobs, rewardRepository, selector, rewardService,
+                firstDefeatRewardService, bossManager::dropAction);
 
         ItemFactory itemFactory = new ItemFactory(messages, serverVersion, plugin.getLogger());
         GuiTemplateRepository guiTemplates = new GuiTemplateRepository(plugin, messages, itemFactory);
@@ -168,7 +180,8 @@ public final class PluginRuntime implements ManagedRuntime {
                 mythicMobs::exists, mythicMobs::mobIds,
                 () -> List.copyOf(spawningRepository.mobGroupIds()),
                 () -> List.copyOf(rewardRepository.groupIds()),
-                rewardRepository::rarities, locales::locale, settings.safetyLimits(),
+                rewardRepository::rarities, rewardRepository::firstDefeatOptions,
+                locales::locale, settings.safetyLimits(),
                 new OwnedTasks(scheduler));
 
         if (settings.debug()) {

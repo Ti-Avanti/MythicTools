@@ -20,6 +20,7 @@ final class EditorFieldIcon {
         return switch (leaf) {
             case "rarity" -> Material.AMETHYST_SHARD;
             case "weight" -> Material.GOLD_NUGGET;
+            case "grant-mode" -> Material.NETHER_STAR;
             case "min", "min-amount", "min-distance", "minimum-online-players" -> Material.LIME_DYE;
             case "max", "max-amount", "max-distance", "max-active", "max-alive" -> Material.RED_DYE;
             case "command", "commands" -> Material.COMMAND_BLOCK;

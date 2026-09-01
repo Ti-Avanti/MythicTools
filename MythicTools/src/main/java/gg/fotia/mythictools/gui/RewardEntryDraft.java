@@ -29,6 +29,7 @@ final class RewardEntryDraft {
             throw new IllegalArgumentException("没有可用的奖励稀有度");
         }
         Map<String, Object> values = new LinkedHashMap<>();
+        values.put("grant-mode", "weighted");
         values.put("weight", 100L);
         values.put("min-amount", 1);
         values.put("max-amount", 1);
@@ -61,9 +62,9 @@ final class RewardEntryDraft {
             }
             values.put(key, copyValue(section.get(key)));
         }
-        if (values.containsKey("weight")) {
-            values.put("weight", normalizeWeight(values.get("weight")));
-        }
+        values.putIfAbsent("weight", 100L);
+        values.put("weight", normalizeWeight(values.get("weight")));
+        values.putIfAbsent("grant-mode", "weighted");
         if (type.equals("item")) {
             values.putIfAbsent("delivery", "ground");
         } else {
@@ -112,7 +113,10 @@ final class RewardEntryDraft {
     }
 
     List<String> fields() {
-        return values.keySet().stream().sorted(Comparator.naturalOrder()).toList();
+        boolean firstDefeat = "first-defeat".equals(String.valueOf(values.get("grant-mode")));
+        return values.keySet().stream()
+                .filter(field -> !firstDefeat || !field.equals("weight"))
+                .sorted(Comparator.naturalOrder()).toList();
     }
 
     void applyTo(YamlConfiguration yaml, String path) {

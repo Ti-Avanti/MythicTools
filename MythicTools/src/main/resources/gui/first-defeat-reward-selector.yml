@@ -1,0 +1,22 @@
+title-key: gui.first-defeat-selector.title
+Layout:
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#eeeeeee#'
+  - '#########'
+  - '#p##b##n#'
+items:
+  e:
+    material: NETHER_STAR
+    display-name-key: gui.first-defeat-selector.entry-name
+    lore-keys: [gui.first-defeat-selector.entry-lore]
+  p:
+    material: ARROW
+    display-name-key: gui.list.previous-name
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.first-defeat.back-name
+  n:
+    material: ARROW
+    display-name-key: gui.list.next-name

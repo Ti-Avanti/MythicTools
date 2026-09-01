@@ -2,6 +2,7 @@ package gg.fotia.mythictools.reward;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.ToLongFunction;
 
@@ -56,6 +57,22 @@ public final class WeightedRewardSelector {
         List<RewardGrant> result = new ArrayList<>();
         for (int index = 0; index < copies; index++) {
             RewardEntry entry = weightedEntry(group);
+            result.add(new RewardGrant(entry, randomBetween(entry.minAmount(), entry.maxAmount())));
+        }
+        return List.copyOf(result);
+    }
+
+    /** 直接构造首次击败专用条目，完全绕过权重抽取并对重复引用去重。 */
+    public List<RewardGrant> selectFirstDefeat(List<RewardEntryRef> references) {
+        List<RewardGrant> result = new ArrayList<>();
+        for (RewardEntryRef reference : new LinkedHashSet<>(references)) {
+            RewardEntry entry = repository.entry(reference.groupId(), reference.entryId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "不存在的首次击败奖励: " + reference.groupId() + "/" + reference.entryId()));
+            if (entry.grantMode() != RewardGrantMode.FIRST_DEFEAT) {
+                throw new IllegalArgumentException(
+                        "奖励不是首次击败专用模式: " + reference.groupId() + "/" + reference.entryId());
+            }
             result.add(new RewardGrant(entry, randomBetween(entry.minAmount(), entry.maxAmount())));
         }
         return List.copyOf(result);

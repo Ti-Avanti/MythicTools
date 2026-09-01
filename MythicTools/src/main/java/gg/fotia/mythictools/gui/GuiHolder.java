@@ -11,6 +11,7 @@ public final class GuiHolder implements InventoryHolder {
     final AdminType type;
     final String id;
     final String context;
+    final String selection;
     final int page;
     final Map<Integer, String> valuesBySlot = new HashMap<>();
     private Inventory inventory;
@@ -20,10 +21,21 @@ public final class GuiHolder implements InventoryHolder {
     }
 
     public GuiHolder(GuiView view, AdminType type, String id, String context, int page) {
+        this(view, type, id, context, null, page);
+    }
+
+    public GuiHolder(
+            GuiView view,
+            AdminType type,
+            String id,
+            String context,
+            String selection,
+            int page) {
         this.view = view;
         this.type = type;
         this.id = id;
         this.context = context;
+        this.selection = selection;
         this.page = page;
     }
 

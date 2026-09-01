@@ -35,4 +35,12 @@ class RewardOptionSelectorTypeTest {
         assertNull(RewardOptionSelectorType.fromField("command"));
         assertNull(RewardOptionSelectorType.fromField("display.zh_CN"));
     }
+
+    @Test
+    void exposesWeightedAndFirstDefeatGrantModes() {
+        RewardOptionSelectorType selector = RewardOptionSelectorType.fromField("grant-mode");
+
+        assertEquals(List.of("weighted", "first-defeat"), selector.options().stream()
+                .map(RewardOptionSelectorType.Option::value).toList());
+    }
 }

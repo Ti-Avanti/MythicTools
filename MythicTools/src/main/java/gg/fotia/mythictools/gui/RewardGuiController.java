@@ -179,9 +179,9 @@ final class RewardGuiController {
             String entryId,
             RewardEntryDraft draft,
             RewardOptionSelectorType selector) {
-        GuiTemplate template = context.screens.template("reward-option-selector");
+        GuiTemplate template = context.screens.template(optionTemplate(selector));
         GuiHolder holder = new GuiHolder(GuiView.REWARD_OPTION_SELECTOR, AdminType.DROP_GROUP,
-                entryId, category.key(), 0);
+                entryId, category.key(), selector.field(), 0);
         Inventory inventory = context.screens.createInventory(holder, template, player, Map.of(
                 "id", entryId,
                 "mode", context.messages.text(player,
@@ -211,17 +211,26 @@ final class RewardGuiController {
             return;
         }
         EditorCategory category = EditorCategory.byKey(AdminType.DROP_GROUP, holder.context);
-        RewardOptionSelectorType selector = RewardOptionSelectorType.forRewardType(draft.type());
+        RewardOptionSelectorType selector = RewardOptionSelectorType.fromField(holder.selection);
+        if (selector == null) {
+            openRewardEditor(player, session, category, holder.id, draft);
+            return;
+        }
         String option = holder.valuesBySlot.get(slot);
         if (option != null) {
             draft.set(selector.field(), option);
             openRewardEditor(player, session, category, holder.id, draft);
             return;
         }
-        GuiTemplate template = context.screens.template("reward-option-selector");
+        GuiTemplate template = context.screens.template(optionTemplate(selector));
         if (template.slots('b').contains(slot)) {
             openRewardEditor(player, session, category, holder.id, draft);
         }
+    }
+
+    private static String optionTemplate(RewardOptionSelectorType selector) {
+        return selector == RewardOptionSelectorType.GRANT_MODE
+                ? "reward-grant-mode-selector" : "reward-option-selector";
     }
 
     void handleRewardConfirm(Player player, GuiHolder holder, int slot) {

@@ -74,6 +74,15 @@ broadcast:
     commands: []
 
 rewards:
+  # scope 可选 player（每名玩家一次）或 server（全服一次）。
+  # server 只能发给 killer；player 可选择 killer 或 participants。
+  first-defeat:
+    enabled: false
+    scope: player
+    recipient: participants
+    entries:
+      - group: example
+        entry: first-trophy
   damage-ranking:
     enabled: true
     max-recipients: 3

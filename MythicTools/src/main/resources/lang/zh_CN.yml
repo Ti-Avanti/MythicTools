@@ -96,6 +96,9 @@ gui:
     mob-drop-groups:
       name: "掉落组分配"
       lore: "配置掉落组、权重和抽取数量"
+    mob-drop-first-defeat:
+      name: "首次击败奖励"
+      lore: "设置个人首次或全服首次必得奖励"
     drop-item-rewards:
       name: "物品奖励"
       lore: "从背包录入物品并配置奖励属性"
@@ -126,6 +129,9 @@ gui:
     boss-killer-rewards:
       name: "击杀者奖励"
       lore: "最终击杀玩家的奖励设置"
+    boss-first-defeat:
+      name: "首次击败奖励"
+      lore: "设置个人首次或全服首次必得奖励"
     mob-group-amount:
       name: "基础与生成数量"
       lore: "设置每次成功刷怪的最少与最多抽取次数"
@@ -360,6 +366,7 @@ gui:
     title: "<!i><gold>选择{mode}: <white>{id}"
     delivery-label: "配送方式"
     executor-label: "执行身份"
+    grant-mode-label: "发放模式"
     ground-name: "<!i><green>掉落在地面"
     ground-lore: "<!i><gray>奖励物品生成在击杀位置"
     inventory-name: "<!i><aqua>放入玩家背包"
@@ -368,10 +375,42 @@ gui:
     console-lore: "<!i><gray>以服务器控制台身份执行奖励指令"
     player-name: "<!i><light_purple>玩家执行"
     player-lore: "<!i><gray>以获奖玩家身份执行奖励指令"
+    weighted-name: "<!i><gold>普通权重奖励"
+    weighted-lore: "<!i><gray>参与原有权重随机抽取，可重复获得"
+    first-defeat-name: "<!i><light_purple>首次击败专用"
+    first-defeat-lore: "<!i><gray>不进入随机池，由首次击败配置保证发放"
     option-lore: "<!i>{status}"
     selected: "<!i><green>当前已选择"
     choose: "<!i><yellow>点击选择"
     back-name: "<!i><gray>返回奖励编辑"
+  first-defeat:
+    title: "<!i><gold>首次击败奖励: <white>{id}"
+    enabled-name: "<!i><green>启用状态"
+    enabled-lore: "<!i><gray>当前: <white>{enabled}</white>\n<!i><yellow>点击切换"
+    scope-name: "<!i><aqua>领取范围"
+    scope-lore: "<!i><gray>当前: <white>{scope}</white>\n<!i><yellow>点击切换个人/全服"
+    recipient-name: "<!i><yellow>接收者"
+    recipient-lore: "<!i><gray>当前: <white>{recipient}</white>\n<!i><yellow>点击切换击杀者/参与者"
+    rewards-name: "<!i><light_purple>管理必得奖励"
+    rewards-lore: "<!i><gray>已配置: <white>{amount}</white> 个\n<!i><yellow>点击打开奖励列表"
+    back-name: "<!i><gray>返回分类菜单"
+    empty: "<!i><red>请先添加至少一个首次击败奖励"
+    scope:
+      player: "每名玩家一次"
+      server: "全服一次"
+    recipient:
+      killer: "最终击杀者"
+      participants: "所有伤害参与者"
+  first-defeat-list:
+    title: "<!i><gold>首次必得奖励: <white>{id} <gray>第 {page} 页"
+    entry-name: "<!i><light_purple>{reward}"
+    entry-lore: "<!i><gray>掉落组: <white>{group}</white>\n<!i><gray>奖励 ID: <white>{entry}</white>\n<!i><red>Shift+右键删除"
+    add-name: "<!i><green>添加必得奖励"
+    add-lore: "<!i><gray>从首次击败专用奖励中选择"
+  first-defeat-selector:
+    title: "<!i><gold>选择首次奖励: <white>{id} <gray>第 {page} 页"
+    entry-name: "<!i><light_purple>{reward}"
+    entry-lore: "<!i><gray>掉落组: <white>{group}</white>\n<!i><gray>奖励 ID: <white>{entry}</white>\n<!i><yellow>点击添加"
   editor:
     title: "<!i><gold>编辑 {type}: <white>{id}"
     unset-value: "未设置"
@@ -467,6 +506,7 @@ gui:
       radius: "半径"
       ranks: "名次"
       rarity: "稀有度"
+      grant-mode: "发放模式"
       rewards: "奖励"
       rules: "规则"
       spawn: "生成"

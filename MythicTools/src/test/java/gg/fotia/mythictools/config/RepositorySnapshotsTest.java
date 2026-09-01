@@ -23,7 +23,8 @@ class RepositorySnapshotsTest {
     void snapshotsCloneMutableItemStacksAndLocationsAtBothBoundaries() {
         ItemStack sourceItem = new ItemStack(Material.DIAMOND, 1);
         RewardEntry entry = new RewardEntry(
-                "item", RewardType.ITEM, 1, 1, 1, "common",
+                "item", RewardType.ITEM, gg.fotia.mythictools.reward.RewardGrantMode.WEIGHTED,
+                1, 1, 1, "common",
                 Map.of(), Map.of(), sourceItem, RewardDelivery.INVENTORY, null, CommandExecutorType.CONSOLE);
         RewardSnapshot rewards = new RewardSnapshot(Map.of(), Map.of("group", new DropGroup("group", List.of(entry))), Map.of());
 

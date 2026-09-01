@@ -18,6 +18,7 @@ class EditorCategoryIconTest {
                 Map.entry(EditorCategory.BIOME_LIMITS, Material.IRON_BARS),
                 Map.entry(EditorCategory.MOB_DROP_BASIC, Material.ROTTEN_FLESH),
                 Map.entry(EditorCategory.MOB_DROP_GROUPS, Material.BARREL),
+                Map.entry(EditorCategory.MOB_DROP_FIRST_DEFEAT, Material.TOTEM_OF_UNDYING),
                 Map.entry(EditorCategory.DROP_ITEM_REWARDS, Material.DIAMOND),
                 Map.entry(EditorCategory.DROP_COMMAND_REWARDS, Material.COMMAND_BLOCK),
                 Map.entry(EditorCategory.MOB_GROUP_AMOUNT, Material.DROPPER),
@@ -29,7 +30,8 @@ class EditorCategoryIconTest {
                 Map.entry(EditorCategory.BOSS_POINT_SCHEDULE, Material.CLOCK),
                 Map.entry(EditorCategory.BOSS_BROADCASTS, Material.BELL),
                 Map.entry(EditorCategory.BOSS_RANKING_REWARDS, Material.GOLD_INGOT),
-                Map.entry(EditorCategory.BOSS_KILLER_REWARDS, Material.DIAMOND_SWORD));
+                Map.entry(EditorCategory.BOSS_KILLER_REWARDS, Material.DIAMOND_SWORD),
+                Map.entry(EditorCategory.BOSS_FIRST_DEFEAT, Material.DRAGON_EGG));
 
         assertEquals(EditorCategory.values().length, expected.size());
         expected.forEach((category, material) ->

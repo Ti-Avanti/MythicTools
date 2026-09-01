@@ -65,7 +65,8 @@ public final class BossSnapshot {
         value.rankRewards().forEach((rank, groups) -> ranks.put(rank, List.copyOf(groups)));
         return new BossRewardConfig(
                 value.rankingEnabled(), value.maxRecipients(), ranks, value.rankingChatEnabled(),
-                value.killerEnabled(), new ArrayList<>(value.killerRewards()));
+                value.killerEnabled(), new ArrayList<>(value.killerRewards()),
+                value.firstDefeatRewards());
     }
 
     private static Map<String, String> orderedMap(Map<String, String> source) {
