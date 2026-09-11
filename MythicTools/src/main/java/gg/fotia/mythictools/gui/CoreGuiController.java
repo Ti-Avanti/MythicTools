@@ -431,10 +431,14 @@ final class CoreGuiController {
 
     void save(Player player, EditorSession session) {
         try {
-            context.sessionService.persistSession(player, session);
-            context.sessions.editors.remove(player.getUniqueId());
-            context.messages.send(player, "common.saved", Map.of());
-            openList(player, session.type, 0);
+            context.sessionService.persistSession(player, session, () -> {
+                context.sessions.editors.remove(player.getUniqueId());
+                context.messages.send(player, "common.saved", Map.of());
+                openList(player, session.type, 0);
+            }, exception -> {
+                context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
+                openEditorSession(player, session, null);
+            });
         } catch (IOException | RuntimeException exception) {
             context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
             openEditorSession(player, session, null);
@@ -443,9 +447,13 @@ final class CoreGuiController {
 
     void saveSection(Player player, EditorSession session, EditorCategory category) {
         try {
-            context.sessionService.persistSession(player, session);
-            context.messages.send(player, "common.saved", Map.of());
-            context.sessionService.refreshSession(player, session, refreshed -> openCategory(player, refreshed));
+            context.sessionService.persistSession(player, session, () -> {
+                context.messages.send(player, "common.saved", Map.of());
+                context.sessionService.refreshSession(player, session, refreshed -> openCategory(player, refreshed));
+            }, exception -> {
+                context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
+                openEditorSession(player, session, category);
+            });
         } catch (IOException | RuntimeException exception) {
             context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
             openEditorSession(player, session, category);

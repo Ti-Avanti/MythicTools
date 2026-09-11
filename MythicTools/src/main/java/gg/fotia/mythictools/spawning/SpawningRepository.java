@@ -88,6 +88,16 @@ public final class SpawningRepository implements SpawningConfigView {
         return store.current().spawning().biomeRules();
     }
 
+    @Override
+    public Collection<BiomeSpawnRule> biomeRules(String world, Biome biome) {
+        return store.current().spawning().biomeRules(world, biome);
+    }
+
+    @Override
+    public Object identity() {
+        return store.current().spawning();
+    }
+
     public Collection<SpawnPoint> spawnPoints() {
         return store.current().spawning().spawnPoints();
     }
@@ -126,7 +136,7 @@ public final class SpawningRepository implements SpawningConfigView {
 
     private void loadMobGroups(Map<String, MobGroup> mobGroups, List<ConfigDiagnostic> diagnostics) {
         File directory = new File(context.dataFolder(), "spawning/groups");
-        File[] files = directory.listFiles((ignored, name) -> name.toLowerCase(Locale.ROOT).endsWith(".yml"));
+        File[] files = YamlFiles.list(directory);
         if (files == null) {
             return;
         }
@@ -266,7 +276,7 @@ public final class SpawningRepository implements SpawningConfigView {
             Map<String, SpawnPoint> spawnPoints,
             List<ConfigDiagnostic> diagnostics) {
         File directory = new File(context.dataFolder(), "spawning/points");
-        File[] files = directory.listFiles((ignored, name) -> name.toLowerCase(Locale.ROOT).endsWith(".yml"));
+        File[] files = YamlFiles.list(directory);
         if (files == null) {
             return;
         }

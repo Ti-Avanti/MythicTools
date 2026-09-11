@@ -35,6 +35,11 @@ public final class SpawningManager implements Listener {
     private final Map<UUID, String> entityPoints = new HashMap<>();
     private final Map<String, Long> nextPointSpawns = new HashMap<>();
     private final OwnedTasks tasks;
+    private final SpawnBatchQueue spawnBatches;
+    private final Map<String, NearbyMobIndex> nearbyIndices = new HashMap<>();
+    private final Map<UUID, String> entityRules = new HashMap<>();
+    private final Map<UUID, gg.fotia.mythictools.runtime.TaskHandle> despawnTasks = new HashMap<>();
+    private long lifecycleGeneration;
 
     public SpawningManager(
             JavaPlugin plugin,
@@ -54,12 +59,19 @@ public final class SpawningManager implements Listener {
             long checkPeriodTicks,
             boolean enabled,
             OwnedTasks tasks) {
+        this(repository, mythicMobs, locationFinder, checkPeriodTicks, enabled, tasks, 32);
+    }
+
+    public SpawningManager(
+            SpawningConfigView repository, MythicMobGateway mythicMobs, SpawnLocationFinder locationFinder,
+            long checkPeriodTicks, boolean enabled, OwnedTasks tasks, int maxSpawnsPerTick) {
         this.repository = repository;
         this.mythicMobs = mythicMobs;
         this.locationFinder = locationFinder;
         this.checkPeriodTicks = checkPeriodTicks;
         this.enabled = enabled;
         this.tasks = tasks;
+        this.spawnBatches = new SpawnBatchQueue(maxSpawnsPerTick);
     }
 
     /** 启动所有刷怪任务。 */
@@ -72,13 +84,22 @@ public final class SpawningManager implements Listener {
         long now = System.currentTimeMillis();
         repository.spawnPoints().forEach(point ->
                 nextPointSpawns.put(point.id(), now + Duration.ofSeconds(point.intervalSeconds()).toMillis()));
-        tasks.repeating(this::tickBiomes, checkPeriodTicks, checkPeriodTicks);
+        tasks.repeating(() -> {
+            nearbyIndices.clear();
+            spawnBatches.tick();
+        }, 1L, 1L);
         tasks.repeating(this::tickPoints, 20L, 20L);
+        tasks.repeating(this::tickBiomes, checkPeriodTicks, checkPeriodTicks);
     }
 
     /** 停止任务并清理运行时计时，同时移除本插件生成且仍存活的实体。 */
     public void stop() {
+        lifecycleGeneration++;
         tasks.cancelAll();
+        spawnBatches.clear();
+        nearbyIndices.clear();
+        entityRules.clear();
+        despawnTasks.clear();
         lastAttempts.clear();
         nextPointSpawns.clear();
         Set<UUID> tracked = new HashSet<>();
@@ -128,7 +149,7 @@ public final class SpawningManager implements Listener {
         nextPointSpawns.put(pointId, System.currentTimeMillis());
         tickPoints();
         int after = pointEntities.getOrDefault(pointId, Set.of()).size();
-        if (after > before) {
+        if (after > before || spawnBatches.contains("point:" + pointId)) {
             return true;
         }
         if (previousNext == null) {
@@ -141,7 +162,20 @@ public final class SpawningManager implements Listener {
 
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
-        String pointId = entityPoints.remove(event.getEntity().getUniqueId());
+        UUID entityId = event.getEntity().getUniqueId();
+        var despawn = despawnTasks.remove(entityId);
+        if (despawn != null) {
+            despawn.cancel();
+        }
+        String ruleId = entityRules.remove(entityId);
+        if (ruleId != null) {
+            Set<UUID> entities = biomeEntities.get(ruleId);
+            if (entities != null) {
+                entities.remove(entityId);
+            }
+            nearbyIndices.remove(ruleId);
+        }
+        String pointId = entityPoints.remove(entityId);
         if (pointId == null) {
             return;
         }
@@ -162,15 +196,11 @@ public final class SpawningManager implements Listener {
     }
 
     private void tickBiomes() {
-        cleanupAll();
         long now = System.currentTimeMillis();
         for (Player player : Bukkit.getOnlinePlayers()) {
             String worldName = player.getWorld().getName();
             Biome biome = player.getLocation().getBlock().getBiome();
-            for (BiomeSpawnRule rule : repository.biomeRules()) {
-                if (!matches(rule, worldName, biome)) {
-                    continue;
-                }
+            for (BiomeSpawnRule rule : repository.biomeRules(worldName, biome)) {
                 AttemptKey key = new AttemptKey(player.getUniqueId(), rule.id());
                 long last = lastAttempts.getOrDefault(key, 0L);
                 if (now - last < Duration.ofSeconds(rule.intervalSeconds()).toMillis()) {
@@ -181,20 +211,40 @@ public final class SpawningManager implements Listener {
                     continue;
                 }
                 Set<UUID> global = biomeEntities.computeIfAbsent(rule.id(), ignored -> new HashSet<>());
-                if (global.size() >= rule.maxAliveGlobal() || nearbyCount(player.getLocation(), global,
-                        rule.nearbyRadius()) >= rule.maxAliveNearby()) {
+                if (global.size() >= rule.maxAliveGlobal()) {
+                    continue;
+                }
+                int nearby = nearbyCount(rule, player.getLocation(), global);
+                if (nearby >= rule.maxAliveNearby()) {
                     continue;
                 }
                 locationFinder.find(player, rule).ifPresent(location -> {
-                    int nearbyAvailable = rule.maxAliveNearby()
-                            - nearbyCount(player.getLocation(), global, rule.nearbyRadius());
+                    int nearbyAvailable = rule.maxAliveNearby() - nearby;
                     int amount = Math.min(spawnAmount(rule.mobGroupId(), rule.minAmount(), rule.maxAmount()),
                             Math.min(rule.maxAliveGlobal() - global.size(), nearbyAvailable));
-                    for (int index = 0; index < amount; index++) {
-                        spawn(selectedMob(rule.mobId(), rule.mobGroupId()), location,
-                                rule.level(), rule.despawnSeconds())
-                                .ifPresent(global::add);
-                    }
+                    Object configuration = repository.identity();
+                    spawnBatches.submit("biome:" + rule.id() + ":" + player.getUniqueId(), amount, () -> {
+                        if (repository.identity() != configuration || !player.isOnline()
+                                || !player.getWorld().equals(location.getWorld())
+                                || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)
+                                || global.size() >= rule.maxAliveGlobal()
+                                || nearbyCount(rule, player.getLocation(), global) >= rule.maxAliveNearby()) {
+                            return false;
+                        }
+                        return spawn(selectedMob(rule.mobId(), rule.mobGroupId()), location,
+                                rule.level(), rule.despawnSeconds()).map(entityId -> {
+                                    global.add(entityId);
+                                    entityRules.put(entityId, rule.id());
+                                    var entity = Bukkit.getEntity(entityId);
+                                    NearbyMobIndex current = nearbyIndices.get(rule.id());
+                                    if (current == null) {
+                                        nearbyIndices.put(rule.id(), new NearbyMobIndex(global));
+                                    } else {
+                                        current.add(entity == null ? location : entity.getLocation());
+                                    }
+                                    return true;
+                                }).orElse(false);
+                    });
                 });
             }
         }
@@ -213,24 +263,40 @@ public final class SpawningManager implements Listener {
                     point.location().getBlockZ() >> 4)) {
                 int amount = Math.min(available,
                         spawnAmount(point.mobGroupId(), point.minAmount(), point.maxAmount()));
-                for (int index = 0; index < amount; index++) {
-                    spawn(selectedMob(point.mobId(), point.mobGroupId()), point.location(),
-                            point.level(), point.despawnSeconds()).ifPresent(uuid -> {
+                Object configuration = repository.identity();
+                Location location = point.location();
+                spawnBatches.submit("point:" + point.id(), amount, () -> {
+                    if (repository.identity() != configuration || entities.size() >= point.maxAlive()
+                            || !location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
+                        return false;
+                    }
+                    return spawn(selectedMob(point.mobId(), point.mobGroupId()), location,
+                            point.level(), point.despawnSeconds()).map(uuid -> {
                         entities.add(uuid);
                         entityPoints.put(uuid, point.id());
-                    });
-                }
+                        return true;
+                    }).orElse(false);
+                });
             }
             nextPointSpawns.put(point.id(), now + Duration.ofSeconds(point.intervalSeconds()).toMillis());
         }
     }
 
     private Optional<UUID> spawn(String mobId, Location location, double level, long despawnSeconds) {
+        long generation = lifecycleGeneration;
         Optional<ActiveMob> spawned = mythicMobs.spawn(mobId, location, level);
+        if (generation != lifecycleGeneration) {
+            spawned.ifPresent(ActiveMob::remove);
+            return Optional.empty();
+        }
         spawned.ifPresent(activeMob -> {
             if (despawnSeconds > 0) {
-                tasks.later(() -> mythicMobs.activeMob(activeMob.getUniqueId())
-                        .filter(current -> !current.isDead()).ifPresent(ActiveMob::remove), despawnSeconds * 20L);
+                UUID entityId = activeMob.getUniqueId();
+                long delay = despawnSeconds > Long.MAX_VALUE / 20L ? Long.MAX_VALUE : despawnSeconds * 20L;
+                despawnTasks.put(entityId, tasks.later(() -> {
+                    despawnTasks.remove(entityId);
+                    mythicMobs.activeMob(entityId).filter(current -> !current.isDead()).ifPresent(ActiveMob::remove);
+                }, delay));
             }
         });
         return spawned.map(ActiveMob::getUniqueId);
@@ -251,29 +317,23 @@ public final class SpawningManager implements Listener {
         return WeightedMobSelector.select(group).mobId();
     }
 
-    private static boolean matches(BiomeSpawnRule rule, String worldName, Biome biome) {
-        return rule.enabled()
-                && (rule.worlds().isEmpty() || rule.worlds().contains(worldName))
-                && rule.biomes().contains(biome);
-    }
-
-    private int nearbyCount(Location location, Set<UUID> entities, int radius) {
-        double maximum = radius * radius;
-        int count = 0;
-        for (UUID entityId : entities) {
-            var entity = Bukkit.getEntity(entityId);
-            if (entity != null && entity.getWorld().equals(location.getWorld())
-                    && entity.getLocation().distanceSquared(location) <= maximum) {
-                count++;
-            }
-        }
-        return count;
+    private int nearbyCount(BiomeSpawnRule rule, Location location, Set<UUID> entities) {
+        return nearbyIndices.computeIfAbsent(rule.id(), ignored -> new NearbyMobIndex(entities))
+                .count(location, rule.nearbyRadius(), rule.maxAliveNearby());
     }
 
     private void cleanupAll() {
         biomeEntities.values().forEach(this::cleanup);
         pointEntities.values().forEach(this::cleanup);
         entityPoints.keySet().removeIf(uuid -> !mythicMobs.isLoadedAndActive(uuid));
+        entityRules.keySet().removeIf(uuid -> !mythicMobs.isLoadedAndActive(uuid));
+        despawnTasks.entrySet().removeIf(entry -> {
+            if (mythicMobs.isLoadedAndActive(entry.getKey())) {
+                return false;
+            }
+            entry.getValue().cancel();
+            return true;
+        });
     }
 
     private void cleanup(Set<UUID> entities) {

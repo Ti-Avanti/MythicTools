@@ -234,9 +234,13 @@ final class FirstDefeatGuiController {
         try {
             EditorSession working = session.withYaml(context.sessionService.copyYaml(session.yaml));
             mutation.accept(working.yaml);
-            context.sessionService.persistSession(player, working);
-            context.messages.send(player, "common.saved", Map.of());
-            context.sessionService.refreshSession(player, session, success);
+            context.sessionService.persistSession(player, working, () -> {
+                context.messages.send(player, "common.saved", Map.of());
+                context.sessionService.refreshSession(player, session, success);
+            }, exception -> {
+                context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
+                context.sessionService.refreshAfterFailure(player, session, success);
+            });
         } catch (IOException | RuntimeException exception) {
             context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
             context.sessionService.refreshAfterFailure(player, session, success);

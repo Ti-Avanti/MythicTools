@@ -7,7 +7,10 @@ import gg.fotia.mythictools.boss.IntermediateStageLootMode;
 import gg.fotia.mythictools.config.ConfigValues;
 import gg.fotia.mythictools.config.YamlFiles;
 import java.io.IOException;
-import java.nio.file.Files;
+import gg.fotia.mythictools.MythicToolsPlugin;
+import gg.fotia.mythictools.config.ConfigIoService;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -20,42 +23,82 @@ import org.bukkit.entity.Player;
 /** 编辑会话的持久化、刷新、回滚与清理。 */
 final class EditorSessionService {
     private final GuiContext context;
+    private final Set<UUID> saving = new HashSet<>();
 
     EditorSessionService(GuiContext context) {
         this.context = context;
     }
 
-    /** 校验、冲突检测、原子写盘并触发对应域重载；重载失败回滚文件。 */
-    void persistSession(Player player, EditorSession session) throws IOException {
+    /** 读取与保存由配置 I/O 队列执行；完成校验和写盘后才通知调用方更新界面。 */
+    void persistSession(Player player, EditorSession session, IoAction success, Consumer<Exception> failure)
+            throws IOException {
+        MythicToolsPlugin plugin = (MythicToolsPlugin) context.plugin;
+        UUID playerId = player.getUniqueId();
+        if (saving.contains(playerId)) {
+            return;
+        }
+        EditorSession detached = session.withYaml(copyYaml(session.yaml));
+        validateSession(player, detached);
+        saving.add(playerId);
+        plugin.saveEditedConfiguration(session.file, session.type.domain(), snapshot -> {
+            try {
+                YamlConfiguration latest = YamlFiles.load(detached.file);
+                if (!detached.isTargetUnchanged(latest)) {
+                    throw new IllegalStateException(context.messages.text(player, "common.config-conflict"));
+                }
+                return detached.mergeInto(latest).saveToString();
+            } catch (IOException | InvalidConfigurationException exception) {
+                throw new IllegalStateException(exception.getMessage(), exception);
+            }
+        }).whenComplete((snapshot, problem) -> plugin.configurationIo().onMain(() -> {
+            saving.remove(playerId);
+            if (problem == null) {
+                session.markSaved();
+                EditorSession current = context.sessions.editors.get(playerId);
+                if (current != null) {
+                    current.markSaved();
+                }
+            }
+            if (context.closed || !player.isOnline()
+                    || !(player.getOpenInventory().getTopInventory().getHolder() instanceof GuiHolder)) {
+                cleanupSession(playerId);
+                return null;
+            }
+            if (problem != null) {
+                Throwable cause = ConfigIoService.cause(problem);
+                if (cause instanceof java.util.ConcurrentModificationException) {
+                    cause = new IllegalStateException(context.messages.text(player, "common.config-conflict"));
+                }
+                failure.accept(cause instanceof Exception exception ? exception : new IllegalStateException(cause));
+                return null;
+            }
+            try {
+                YamlFiles.using(snapshot, () -> {
+                    success.run();
+                    return null;
+                });
+            } catch (RuntimeException exception) {
+                failure.accept(exception);
+            }
+            return null;
+        }));
+    }
+
+    private void validateSession(Player player, EditorSession session) {
         if (session.type == AdminType.MOB_GROUP) {
             validateMobGroup(player, session.yaml);
         } else if (session.type == AdminType.BOSS) {
             validateBoss(player, session.yaml);
         }
-        YamlConfiguration latest;
-        try {
-            latest = YamlFiles.load(session.file);
-        } catch (InvalidConfigurationException exception) {
-            throw new IOException("磁盘配置格式错误", exception);
-        }
-        if (!session.isTargetUnchanged(latest)) {
-            throw new IllegalStateException(context.messages.text(player, "common.config-conflict"));
-        }
-        YamlConfiguration candidate = session.mergeInto(latest);
-        byte[] original = Files.readAllBytes(session.file.toPath());
-        YamlFiles.saveAtomically(candidate, session.file);
-        try {
-            context.saveReloadAction.accept(session.type);
-        } catch (RuntimeException exception) {
-            YamlFiles.writeAtomically(original, session.file);
-            try {
-                context.saveReloadAction.accept(session.type);
-            } catch (RuntimeException restoreException) {
-                exception.addSuppressed(restoreException);
-            }
-            throw new IllegalStateException(
-                    context.messages.text(player, "common.save-rolled-back"), exception);
-        }
+    }
+
+    boolean isSaving(UUID playerId) {
+        return saving.contains(playerId);
+    }
+
+    @FunctionalInterface
+    interface IoAction {
+        void run() throws IOException;
     }
 
     void refreshSession(Player player, EditorSession previous, Consumer<EditorSession> action)
@@ -106,6 +149,9 @@ final class EditorSessionService {
     }
 
     void cleanupSession(UUID playerId) {
+        if (saving.contains(playerId)) {
+            return;
+        }
         try {
             GuiSessionStateCleaner.cleanup(
                     playerId,

@@ -33,8 +33,12 @@ public final class MythicToolsExpansion extends PlaceholderExpansion {
 
     /** 重载 PAPI 输出模板并扁平化为单层查找表。 */
     public void reload() {
-        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(
-                new File(plugin.getDataFolder(), "placeholders.yml"));
+        YamlConfiguration yaml;
+        try {
+            yaml = gg.fotia.mythictools.config.YamlFiles.load(new File(plugin.getDataFolder(), "placeholders.yml"));
+        } catch (java.io.IOException | org.bukkit.configuration.InvalidConfigurationException exception) {
+            throw new IllegalStateException("无法读取占位符配置", exception);
+        }
         Map<String, String> flattened = new HashMap<>();
         for (String key : yaml.getKeys(true)) {
             String value = yaml.getString(key);
@@ -43,7 +47,7 @@ public final class MythicToolsExpansion extends PlaceholderExpansion {
             }
         }
         outputs = Map.copyOf(flattened);
-        asyncCache.clear();
+        asyncCache.configure(plugin.settings().performance().placeholderRefreshMillis());
     }
 
     @Override

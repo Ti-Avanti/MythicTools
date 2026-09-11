@@ -11,6 +11,7 @@ public final class SpawningSnapshot {
     private final Map<String, BiomeSpawnRule> biomeRules;
     private final Map<String, SpawnPoint> spawnPoints;
     private final Map<String, MobGroup> mobGroups;
+    private final BiomeRuleIndex biomeIndex;
 
     public SpawningSnapshot(
             Map<String, BiomeSpawnRule> biomeRules,
@@ -19,6 +20,7 @@ public final class SpawningSnapshot {
         this.biomeRules = immutableCopy(biomeRules, SpawningSnapshot::copyBiomeRule);
         this.spawnPoints = immutableCopy(spawnPoints, SpawningSnapshot::copySpawnPoint);
         this.mobGroups = immutableCopy(mobGroups, SpawningSnapshot::copyMobGroup);
+        this.biomeIndex = new BiomeRuleIndex(this.biomeRules.values());
     }
 
     public static SpawningSnapshot empty() {
@@ -26,11 +28,15 @@ public final class SpawningSnapshot {
     }
 
     public Collection<BiomeSpawnRule> biomeRules() {
-        return List.copyOf(biomeRules.values());
+        return biomeRules.values();
+    }
+
+    public Collection<BiomeSpawnRule> biomeRules(String world, org.bukkit.block.Biome biome) {
+        return biomeIndex.matching(world, biome);
     }
 
     public Collection<SpawnPoint> spawnPoints() {
-        return List.copyOf(spawnPoints.values());
+        return spawnPoints.values();
     }
 
     public Collection<String> biomeRuleIds() {

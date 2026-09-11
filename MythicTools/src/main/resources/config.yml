@@ -28,6 +28,8 @@ Spawning:
   Check-Period-Ticks: 100
   # 每次寻找合法生成位置的最大尝试次数
   Location-Attempts: 12
+  # 所有普通刷怪点和群系刷怪合计每 tick 最多生成的实体数；剩余数量分批生成
+  Max-Spawns-Per-Tick: 32
   # 未配置时使用的玩家生成距离
   Default-Min-Distance: 12
   Default-Max-Distance: 32
@@ -58,6 +60,10 @@ Safety-Limits:
 Text:
   # CraftEngine 不存在或图片不存在时替换 <image:...>
   Missing-Image-Fallback: "<?>"
+
+Performance:
+  # 异步占位符缓存刷新间隔（毫秒）；过期时先返回旧值并安排主线程刷新
+  Placeholder-Refresh-Millis: 250
 
 Database:
   File: data.db

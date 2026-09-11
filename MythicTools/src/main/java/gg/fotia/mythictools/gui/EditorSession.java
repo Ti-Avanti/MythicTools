@@ -41,6 +41,10 @@ final class EditorSession {
         newlyCreated = true;
     }
 
+    void markSaved() {
+        newlyCreated = false;
+    }
+
     void inheritCreationDraft(EditorSession source) {
         if (source.newlyCreated) {
             newlyCreated = true;

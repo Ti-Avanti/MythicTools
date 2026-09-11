@@ -84,17 +84,27 @@ public final class MythicToolsCommand implements TabExecutor {
             return true;
         }
         try {
-            plugin.reloadRuntime();
-            send(sender, "command.reload-success", Map.of());
-        } catch (ActiveRuntimeStateException exception) {
-            send(sender, "command.reload-active", Map.of(
-                    "spawning", exception.spawningEntities(),
-                    "bosses", exception.bossFights()));
+            plugin.reloadRuntimeAsync().whenComplete((ignored, failure) -> plugin.configurationIo().onMain(() -> {
+                finishReload(sender, failure);
+                return null;
+            }));
         } catch (RuntimeException exception) {
-            plugin.getLogger().log(java.util.logging.Level.SEVERE, "重载失败", exception);
-            send(sender, "command.reload-failed", Map.of("reason", exception.getMessage()));
+            finishReload(sender, exception);
         }
         return true;
+    }
+
+    private void finishReload(CommandSender sender, Throwable failure) {
+        Throwable cause = failure == null ? null : gg.fotia.mythictools.config.ConfigIoService.cause(failure);
+        if (cause instanceof ActiveRuntimeStateException active) {
+            send(sender, "command.reload-active", Map.of(
+                    "spawning", active.spawningEntities(), "bosses", active.bossFights()));
+        } else if (cause != null) {
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "重载失败", cause);
+            send(sender, "command.reload-failed", Map.of("reason", String.valueOf(cause.getMessage())));
+        } else {
+            send(sender, "command.reload-success", Map.of());
+        }
     }
 
     private boolean info(CommandSender sender) {

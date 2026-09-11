@@ -17,6 +17,7 @@ public final class FirstDefeatRewardService {
     private final Function<List<RewardEntryRef>, List<RewardGrant>> selector;
     private final Delivery delivery;
     private final Executor mainThread;
+    private final FirstDefeatDispatcher dispatcher;
 
     public FirstDefeatRewardService(
             ClaimStore claims,
@@ -27,6 +28,16 @@ public final class FirstDefeatRewardService {
         this.selector = selector;
         this.delivery = delivery;
         this.mainThread = mainThread;
+        this.dispatcher = null;
+    }
+
+    public FirstDefeatRewardService(
+            Function<List<RewardEntryRef>, List<RewardGrant>> selector, FirstDefeatDispatcher dispatcher) {
+        this.claims = null;
+        this.selector = selector;
+        this.delivery = null;
+        this.mainThread = null;
+        this.dispatcher = java.util.Objects.requireNonNull(dispatcher, "dispatcher");
     }
 
     /** 返回所有领取判定与主线程交付完成后的阶段，调用方无需阻塞等待。 */
@@ -42,6 +53,18 @@ public final class FirstDefeatRewardService {
         }
         List<CompletableFuture<Void>> completions = new ArrayList<>();
         for (RewardRecipient recipient : recipients) {
+            if (dispatcher != null) {
+                try {
+                    completions.add(dispatcher.enqueue(config.scope(), source, recipient,
+                            () -> selector.apply(config.entries()), location, variables, forceInventory).toCompletableFuture());
+                } catch (RuntimeException exception) {
+                    completions.add(CompletableFuture.failedFuture(exception));
+                }
+                if (config.scope() == FirstDefeatScope.SERVER) {
+                    break;
+                }
+                continue;
+            }
             CompletableFuture<Void> completion = new CompletableFuture<>();
             completions.add(completion);
             CompletionStage<Boolean> claim;

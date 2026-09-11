@@ -9,6 +9,8 @@ import gg.fotia.mythictools.config.ConfigLoadReport;
 import gg.fotia.mythictools.config.PluginSettings;
 import gg.fotia.mythictools.config.ResourceInstaller;
 import gg.fotia.mythictools.config.YamlFiles;
+import gg.fotia.mythictools.config.ConfigIoService;
+import gg.fotia.mythictools.config.ConfigFileSnapshot;
 import gg.fotia.mythictools.gui.AdminGuiManager;
 import gg.fotia.mythictools.gui.GuiHolder;
 import gg.fotia.mythictools.lang.LocaleService;
@@ -18,6 +20,7 @@ import gg.fotia.mythictools.runtime.BukkitTaskScheduler;
 import gg.fotia.mythictools.runtime.OwnedTasks;
 import gg.fotia.mythictools.runtime.PluginRuntime;
 import gg.fotia.mythictools.runtime.RuntimeSwap;
+import gg.fotia.mythictools.reward.FirstDefeatDispatcher;
 import gg.fotia.mythictools.spawning.SpawningManager;
 import gg.fotia.mythictools.spawning.SpawningRepository;
 import gg.fotia.mythictools.storage.PendingRewardRepository;
@@ -40,10 +43,12 @@ public final class MythicToolsPlugin extends JavaPlugin {
             exception -> getLogger().log(Level.WARNING, "旧运行时清理失败，新运行时继续工作", exception));
     private PendingRewardRepository pendingRewards;
     private FirstDefeatRepository firstDefeats;
+    private FirstDefeatDispatcher firstDefeatDispatcher;
     private OwnedTasks infrastructureTasks;
     private File databaseFile;
     private PacketLocaleListener packetLocaleListener;
     private MythicToolsExpansion expansion;
+    private ConfigIoService configurationIo;
 
     @Override
     public void onEnable() {
@@ -54,11 +59,15 @@ public final class MythicToolsPlugin extends JavaPlugin {
             PluginSettings initialSettings = PluginSettings.load(configuration);
             databaseFile = databaseFile(initialSettings);
             infrastructureTasks = new OwnedTasks(new BukkitTaskScheduler(this));
+            configurationIo = new ConfigIoService(getDataFolder(), this::executePersistent);
             pendingRewards = new PendingRewardRepository(this, databaseFile, infrastructureTasks);
             firstDefeats = new FirstDefeatRepository(databaseFile);
+            firstDefeatDispatcher = new FirstDefeatDispatcher(
+                    firstDefeats, () -> runtime().rewardService(), this::executePersistent, getLogger());
             runtimes.installInitial(PluginRuntime.prepare(
                     this, configuration, ConfigLoadMode.STARTUP_LENIENT, pendingRewards, firstDefeats));
             registerStableBridges();
+            infrastructureTasks.repeating(firstDefeatDispatcher::recover, 20L, 100L);
             reloadConfig();
             getLogger().info("MythicTools 已启用，耗时 " + (System.currentTimeMillis() - started) + "ms");
         } catch (Exception exception) {
@@ -76,6 +85,23 @@ public final class MythicToolsPlugin extends JavaPlugin {
 
     /** 完整准备候选，成功提交后才释放旧运行时。 */
     public void reloadRuntime() {
+        if (configurationIo.busy()) {
+            throw new IllegalStateException("已有配置操作进行中，请等待完成");
+        }
+        reloadRuntimeNow();
+    }
+
+    public java.util.concurrent.CompletionStage<Void> reloadRuntimeAsync() {
+        return configurationIo.submit(snapshot -> {
+            YamlFiles.using(snapshot, () -> {
+                reloadRuntimeNow();
+                return null;
+            });
+            return java.util.concurrent.CompletableFuture.completedFuture(null);
+        });
+    }
+
+    private void reloadRuntimeNow() {
         long started = System.currentTimeMillis();
         try {
             runtime().activity().requireIdle();
@@ -86,9 +112,10 @@ public final class MythicToolsPlugin extends JavaPlugin {
                 throw new IllegalStateException(
                         "Database.File 无法热切换；旧运行时与待发奖励仍保持可用，请修改后重启服务器");
             }
+            YamlFiles.load(new File(getDataFolder(), "placeholders.yml"));
             runtimes.replace(() -> PluginRuntime.prepare(
                     this, configuration, ConfigLoadMode.STRICT, pendingRewards, firstDefeats));
-            reloadConfig();
+            getConfig().loadFromString(configuration.saveToString());
             if (expansion != null) {
                 expansion.reload();
             }
@@ -106,6 +133,9 @@ public final class MythicToolsPlugin extends JavaPlugin {
 
     /** GUI 保存后只刷新被编辑域（及其依赖域）的数据仓库。 */
     public void reloadEditedData(ConfigDomain domain) {
+        if (configurationIo.busy()) {
+            throw new IllegalStateException("已有配置操作进行中，请等待完成");
+        }
         long started = System.currentTimeMillis();
         ConfigLoadReport report = runtime().reloadRepositories(
                 ConfigLoadMode.STRICT, java.util.EnumSet.of(domain));
@@ -115,6 +145,9 @@ public final class MythicToolsPlugin extends JavaPlugin {
 
     /** 严格准备全部数据配置并一次发布，失败时保留旧快照。 */
     public ConfigLoadReport reloadDataStrict() {
+        if (configurationIo.busy()) {
+            throw new IllegalStateException("已有配置操作进行中，请等待完成");
+        }
         long started = System.currentTimeMillis();
         ConfigLoadReport report = runtime().reloadRepositories(ConfigLoadMode.STRICT);
         if (expansion != null) {
@@ -175,6 +208,49 @@ public final class MythicToolsPlugin extends JavaPlugin {
         return runtime().adminGui();
     }
 
+    public FirstDefeatDispatcher firstDefeatDispatcher() {
+        return firstDefeatDispatcher;
+    }
+
+    /** 归属于插件生命周期的持久交付回调，不随配置运行时切换而取消。 */
+    public void executePersistent(Runnable command) {
+        infrastructureTasks.execute(command);
+    }
+
+    public ConfigIoService configurationIo() {
+        return configurationIo;
+    }
+
+    public void reloadFromGui(org.bukkit.entity.Player player) {
+        reloadRuntimeAsync().whenComplete((ignored, failure) -> configurationIo.onMain(() -> {
+            if (!player.isOnline()) {
+                return null;
+            }
+            Throwable cause = failure == null ? null : ConfigIoService.cause(failure);
+            if (cause instanceof gg.fotia.mythictools.runtime.ActiveRuntimeStateException active) {
+                messages().send(player, "command.reload-active", java.util.Map.of(
+                        "spawning", active.spawningEntities(), "bosses", active.bossFights()));
+            } else if (cause != null) {
+                getLogger().log(Level.SEVERE, "重载失败", cause);
+                messages().send(player, "command.reload-failed", java.util.Map.of("reason", String.valueOf(cause.getMessage())));
+            } else {
+                messages().send(player, "command.reload-success", java.util.Map.of());
+                adminGui().openMain(player);
+            }
+            return null;
+        }));
+    }
+
+    public java.util.concurrent.CompletionStage<ConfigFileSnapshot> saveEditedConfiguration(
+            File file, ConfigDomain domain, java.util.function.Function<ConfigFileSnapshot, String> edit) {
+        return configurationIo.save(file, snapshot -> {
+            String contents = YamlFiles.using(snapshot, () -> edit.apply(snapshot));
+            Runnable publish = YamlFiles.using(snapshot.with(file, contents),
+                    () -> runtime().prepareRepositorySave(domain));
+            return new ConfigIoService.PreparedSave(contents, publish);
+        });
+    }
+
     private void registerStableBridges() {
         packetLocaleListener = new PacketLocaleListener(() -> {
             PluginRuntime current = runtimes.currentOrNull();
@@ -197,6 +273,9 @@ public final class MythicToolsPlugin extends JavaPlugin {
     }
 
     private void shutdownAll() {
+        if (configurationIo != null) {
+            configurationIo.close();
+        }
         if (expansion != null) {
             try {
                 expansion.unregister();
@@ -212,6 +291,10 @@ public final class MythicToolsPlugin extends JavaPlugin {
                 getLogger().log(Level.WARNING, "注销 PacketEvents 语言监听器失败", exception);
             }
             packetLocaleListener = null;
+        }
+        if (firstDefeatDispatcher != null) {
+            firstDefeatDispatcher.close();
+            firstDefeatDispatcher = null;
         }
         runtimes.close();
         if (pendingRewards != null) {

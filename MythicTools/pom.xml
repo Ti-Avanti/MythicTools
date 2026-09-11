@@ -6,7 +6,7 @@
 
     <groupId>gg.fotia</groupId>
     <artifactId>mythictools</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <name>MythicTools</name>
     <description>MythicMobs 掉落、刷怪与 Boss 管理工具</description>
 

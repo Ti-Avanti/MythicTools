@@ -445,9 +445,13 @@ final class BossRewardGuiController {
             EditorSession working = session.withYaml(context.sessionService.copyYaml(session.yaml));
             mutation.accept(working.yaml);
             rules.validateSelections(player, working.yaml);
-            context.sessionService.persistSession(player, working);
-            context.messages.send(player, "common.saved", Map.of());
-            context.sessionService.refreshSession(player, session, success);
+            context.sessionService.persistSession(player, working, () -> {
+                context.messages.send(player, "common.saved", Map.of());
+                context.sessionService.refreshSession(player, session, success);
+            }, exception -> {
+                context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
+                context.sessionService.refreshAfterFailure(player, session, failure);
+            });
         } catch (java.io.IOException | RuntimeException exception) {
             context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
             context.sessionService.refreshAfterFailure(player, session, failure);

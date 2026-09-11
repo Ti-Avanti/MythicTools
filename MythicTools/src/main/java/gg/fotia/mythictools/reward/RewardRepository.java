@@ -361,7 +361,7 @@ public final class RewardRepository {
     }
 
     private static List<File> yamlFiles(File directory) {
-        File[] files = directory.listFiles((ignored, name) -> name.toLowerCase(Locale.ROOT).endsWith(".yml"));
+        File[] files = YamlFiles.list(directory);
         return files == null ? List.of() : java.util.Arrays.stream(files).sorted().toList();
     }
 

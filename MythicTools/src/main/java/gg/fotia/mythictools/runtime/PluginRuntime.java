@@ -66,6 +66,7 @@ public final class PluginRuntime implements ManagedRuntime {
     private final AdminGuiManager adminGui;
     private final PlayerLocaleListener playerLocaleListener;
     private final DropListener dropListener;
+    private final RewardService rewardService;
     private final OwnedTasks runtimeTasks;
     private final List<Listener> registeredListeners = new ArrayList<>();
     private final AtomicBoolean closed = new AtomicBoolean();
@@ -87,6 +88,7 @@ public final class PluginRuntime implements ManagedRuntime {
             AdminGuiManager adminGui,
             PlayerLocaleListener playerLocaleListener,
             DropListener dropListener,
+            RewardService rewardService,
             OwnedTasks runtimeTasks) {
         this.plugin = plugin;
         this.settings = settings;
@@ -104,6 +106,7 @@ public final class PluginRuntime implements ManagedRuntime {
         this.adminGui = adminGui;
         this.playerLocaleListener = playerLocaleListener;
         this.dropListener = dropListener;
+        this.rewardService = rewardService;
         this.runtimeTasks = runtimeTasks;
     }
 
@@ -143,18 +146,13 @@ public final class PluginRuntime implements ManagedRuntime {
         WeightedRewardSelector selector = new WeightedRewardSelector(rewardRepository);
         RewardService rewardService = new RewardService(
                 rewardRepository, pendingRewards, locales, messages, settings,
-                command -> runtimeTasks.execute(command), plugin.getLogger());
+                plugin::executePersistent, plugin.getLogger());
         FirstDefeatRewardService firstDefeatRewardService = new FirstDefeatRewardService(
-                firstDefeats::tryClaim,
-                selector::selectFirstDefeat,
-                (recipient, grants, location, variables, forceInventory) -> rewardService.deliver(
-                        recipient.playerId(), recipient.playerName(), recipient.onlinePlayer(), grants,
-                        location, variables, forceInventory),
-                command -> runtimeTasks.execute(command));
+                selector::selectFirstDefeat, plugin.firstDefeatDispatcher());
         SpawnLocationFinder locationFinder = new SpawnLocationFinder(settings.spawnLocationAttempts());
         SpawningManager spawningManager = new SpawningManager(
                 spawningRepository, mythicMobs, locationFinder, settings.spawnCheckPeriodTicks(),
-                settings.overrideSpawning(), new OwnedTasks(scheduler));
+                settings.overrideSpawning(), new OwnedTasks(scheduler), settings.performance().maxSpawnsPerTick());
         BossManager bossManager = new BossManager(
                 plugin, bossRepository, mythicMobs, locationFinder, selector, rewardService,
                 firstDefeatRewardService,
@@ -173,10 +171,7 @@ public final class PluginRuntime implements ManagedRuntime {
                 plugin, messages, new ChatInputSessions(), new OwnedTasks(scheduler));
         AdminGuiManager adminGui = new AdminGuiManager(
                 plugin, guiTemplates, messages, chatInput, type -> plugin.reloadEditedData(type.domain()),
-                new GuiRuntimeReloadAction(
-                        plugin::reloadRuntime,
-                        player -> plugin.messages().send(player, "command.reload-success", Map.of()),
-                        player -> plugin.adminGui().openMain(player)),
+                plugin::reloadFromGui,
                 mythicMobs::exists, mythicMobs::mobIds,
                 () -> List.copyOf(spawningRepository.mobGroupIds()),
                 () -> List.copyOf(rewardRepository.groupIds()),
@@ -191,7 +186,7 @@ public final class PluginRuntime implements ManagedRuntime {
         return new PluginRuntime(
                 plugin, settings, serverVersion, locales, messages, rewardRepository,
                 spawningRepository, bossRepository, reloadCoordinator, spawningManager, bossManager,
-                guiTemplates, chatInput, adminGui, playerLocaleListener, dropListener, runtimeTasks);
+                guiTemplates, chatInput, adminGui, playerLocaleListener, dropListener, rewardService, runtimeTasks);
     }
 
     @Override
@@ -251,6 +246,18 @@ public final class PluginRuntime implements ManagedRuntime {
         return reloadRepositories(plugin, reloadCoordinator, mode);
     }
 
+    /** 完整校验候选后返回一次发布动作，供异步写盘成功后提交。 */
+    public Runnable prepareRepositorySave(ConfigDomain domain) {
+        var prepared = reloadCoordinator.prepare(ConfigLoadMode.STRICT, java.util.EnumSet.of(domain));
+        logConfigReport(plugin, prepared.report());
+        return () -> {
+            if (closed.get()) {
+                throw new IllegalStateException("配置所属运行时已关闭");
+            }
+            reloadCoordinator.publish(prepared);
+        };
+    }
+
     /** 只重载指定配置域（连带其依赖域），未变更域复用当前快照。 */
     public ConfigLoadReport reloadRepositories(ConfigLoadMode mode, java.util.Set<ConfigDomain> domains) {
         try {
@@ -281,6 +288,10 @@ public final class PluginRuntime implements ManagedRuntime {
 
     public RewardRepository rewardRepository() {
         return rewardRepository;
+    }
+
+    public RewardService rewardService() {
+        return rewardService;
     }
 
     public SpawningRepository spawningRepository() {

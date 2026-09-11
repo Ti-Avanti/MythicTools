@@ -35,6 +35,16 @@ public final class RepositoryReloadCoordinator {
      * Boss 域校验依赖掉落组，因此奖励域变更时会连带重新准备 Boss 域。
      */
     public ConfigLoadReport reload(ConfigLoadMode mode, java.util.Set<ConfigDomain> domains) {
+        PreparedSnapshot<RepositorySnapshots> prepared = prepare(mode, domains);
+        publish(prepared);
+        return prepared.report();
+    }
+
+    public void publish(PreparedSnapshot<RepositorySnapshots> prepared) {
+        store.publish(prepared.snapshot());
+    }
+
+    public PreparedSnapshot<RepositorySnapshots> prepare(ConfigLoadMode mode, java.util.Set<ConfigDomain> domains) {
         RepositorySnapshots current = store.current();
         boolean reloadRewards = domains.contains(ConfigDomain.REWARDS);
         boolean reloadSpawning = domains.contains(ConfigDomain.SPAWNING);
@@ -65,7 +75,6 @@ public final class RepositoryReloadCoordinator {
         if (report.blocks(mode)) {
             throw new ConfigLoadException(report);
         }
-        store.publish(new RepositorySnapshots(rewardSnapshot, spawningSnapshot, bossSnapshot));
-        return report;
+        return new PreparedSnapshot<>(new RepositorySnapshots(rewardSnapshot, spawningSnapshot, bossSnapshot), report);
     }
 }

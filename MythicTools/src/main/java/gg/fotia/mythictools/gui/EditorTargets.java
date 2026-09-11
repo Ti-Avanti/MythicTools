@@ -83,7 +83,7 @@ final class EditorTargets {
             case BOSS -> new File(plugin.getDataFolder(), "bosses");
             case BIOME_RULE -> throw new IllegalStateException();
         };
-        File[] files = directory.listFiles((ignored, name) -> name.toLowerCase(Locale.ROOT).endsWith(".yml"));
+        File[] files = YamlFiles.list(directory);
         if (files == null) {
             return List.of();
         }
@@ -258,7 +258,7 @@ final class EditorTargets {
                 }
             }
             File points = new File(plugin.getDataFolder(), "spawning/points");
-            File[] files = points.listFiles((ignored, name) -> name.toLowerCase(Locale.ROOT).endsWith(".yml"));
+            File[] files = YamlFiles.list(points);
             if (files != null) {
                 for (File file : files) {
                     YamlConfiguration yaml = YamlFiles.load(file);

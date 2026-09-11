@@ -10,14 +10,45 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 /** YAML 加载与原子保存工具。 */
 public final class YamlFiles {
+    private static final ThreadLocal<ConfigFileSnapshot> SNAPSHOT = new ThreadLocal<>();
     private YamlFiles() {
     }
 
     /** 加载 YAML；语法错误会携带文件路径向上抛出。 */
     public static YamlConfiguration load(File file) throws IOException, InvalidConfigurationException {
         YamlConfiguration yaml = new YamlConfiguration();
-        yaml.load(file);
+        ConfigFileSnapshot snapshot = SNAPSHOT.get();
+        if (snapshot == null) {
+            yaml.load(file);
+        } else {
+            yaml.loadFromString(snapshot.read(file));
+        }
         return yaml;
+    }
+
+    public static File[] list(File directory) {
+        ConfigFileSnapshot snapshot = SNAPSHOT.get();
+        return snapshot == null
+                ? directory.listFiles((ignored, name) -> name.toLowerCase(java.util.Locale.ROOT).endsWith(".yml"))
+                : snapshot.list(directory);
+    }
+
+    public static <T> T using(ConfigFileSnapshot snapshot, java.util.concurrent.Callable<T> action) {
+        ConfigFileSnapshot previous = SNAPSHOT.get();
+        SNAPSHOT.set(snapshot);
+        try {
+            return action.call();
+        } catch (RuntimeException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new IllegalStateException(exception.getMessage(), exception);
+        } finally {
+            if (previous == null) {
+                SNAPSHOT.remove();
+            } else {
+                SNAPSHOT.set(previous);
+            }
+        }
     }
 
     /** 先写临时文件，再原子替换目标文件。 */

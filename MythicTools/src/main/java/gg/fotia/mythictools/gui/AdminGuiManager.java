@@ -7,6 +7,7 @@ import gg.fotia.mythictools.runtime.BukkitTaskScheduler;
 import gg.fotia.mythictools.runtime.OwnedTasks;
 import gg.fotia.mythictools.text.MessageRenderer;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -105,6 +106,11 @@ public final class AdminGuiManager implements Listener {
         Player player = (Player) event.getWhoClicked();
         int rawSlot = event.getRawSlot();
         event.setCancelled(true);
+        if (context.plugin instanceof gg.fotia.mythictools.MythicToolsPlugin plugin
+                && (plugin.configurationIo().busy() || context.sessionService.isSaving(player.getUniqueId()))) {
+            context.messages.send(player, "common.saving", Map.of());
+            return;
+        }
         RewardEntryDraft rewardDraft = context.sessions.rewardDrafts.get(player.getUniqueId());
         if (holder.view == GuiView.REWARD_EDITOR && rewardDraft != null
                 && rewardDraft.type().equals("item") && rawSlot >= holder.getInventory().getSize()) {
@@ -209,6 +215,7 @@ public final class AdminGuiManager implements Listener {
 
     /** 丢弃所有编辑和聊天状态，不触发任何重开或取消回调。 */
     public void close() {
+        context.closed = true;
         for (UUID playerId : List.copyOf(context.sessions.editors.keySet())) {
             context.sessionService.cleanupSession(playerId);
         }

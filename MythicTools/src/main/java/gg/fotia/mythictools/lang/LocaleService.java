@@ -35,7 +35,7 @@ public final class LocaleService {
     public void reload() {
         Map<String, Map<String, String>> loaded = new HashMap<>();
         File directory = new File(plugin.getDataFolder(), "lang");
-        File[] files = directory.listFiles((ignored, name) -> name.toLowerCase(Locale.ROOT).endsWith(".yml"));
+        File[] files = YamlFiles.list(directory);
         if (files != null) {
             for (File file : files) {
                 try {

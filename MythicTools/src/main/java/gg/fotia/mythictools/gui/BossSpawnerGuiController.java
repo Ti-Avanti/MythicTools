@@ -248,10 +248,14 @@ final class BossSpawnerGuiController {
     private void saveBossSpawner(
             Player player, EditorSession session, EditorCategory category, String spawnerId) {
         try {
-            context.sessionService.persistSession(player, session);
-            context.messages.send(player, "common.saved", Map.of());
-            context.sessionService.refreshSession(player, session,
-                    refreshed -> openBossSpawnerList(player, refreshed, category, 0));
+            context.sessionService.persistSession(player, session, () -> {
+                context.messages.send(player, "common.saved", Map.of());
+                context.sessionService.refreshSession(player, session,
+                        refreshed -> openBossSpawnerList(player, refreshed, category, 0));
+            }, exception -> {
+                context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
+                openBossSpawnerEditor(player, session, category, spawnerId);
+            });
         } catch (IOException | RuntimeException exception) {
             context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
             openBossSpawnerEditor(player, session, category, spawnerId);
@@ -286,10 +290,16 @@ final class BossSpawnerGuiController {
             try {
                 EditorSession working = session.withYaml(context.sessionService.copyYaml(session.yaml));
                 BossSpawnerEditorFields.remove(working.yaml, category, holder.id);
-                context.sessionService.persistSession(player, working);
-                context.messages.send(player, "common.deleted", Map.of("id", holder.id));
-                context.sessionService.refreshSession(player, session,
-                        refreshed -> openBossSpawnerList(player, refreshed, category, holder.page));
+                context.sessionService.persistSession(player, working, () -> {
+                    context.messages.send(player, "common.deleted", Map.of("id", holder.id));
+                    context.sessionService.refreshSession(player, session,
+                            refreshed -> openBossSpawnerList(player, refreshed, category, holder.page));
+                }, exception -> {
+                    context.messages.send(player, "common.config-error",
+                            Map.of("reason", exception.getMessage()));
+                    context.sessionService.refreshAfterFailure(player, session,
+                            refreshed -> openBossSpawnerList(player, refreshed, category, holder.page));
+                });
             } catch (IOException | RuntimeException exception) {
                 context.messages.send(player, "common.config-error",
                         Map.of("reason", exception.getMessage()));

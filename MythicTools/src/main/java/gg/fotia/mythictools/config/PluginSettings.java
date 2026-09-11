@@ -21,11 +21,25 @@ public record PluginSettings(
         String missingImageFallback,
         String databaseFile,
         boolean debug,
-        SafetyLimits safetyLimits) {
+        SafetyLimits safetyLimits,
+        PerformanceSettings performance) {
 
     public PluginSettings {
         localeAliases = Map.copyOf(localeAliases);
         safetyLimits = java.util.Objects.requireNonNull(safetyLimits, "safetyLimits");
+        performance = java.util.Objects.requireNonNull(performance, "performance");
+    }
+
+    public PluginSettings(
+            String defaultLocale, boolean followClientLocale, Map<String, String> localeAliases,
+            boolean overrideDrops, boolean overrideSpawning, boolean overrideBoss,
+            long spawnCheckPeriodTicks, int spawnLocationAttempts, int defaultMinSpawnDistance,
+            int defaultMaxSpawnDistance, boolean dropOverflowAtFeet, String missingImageFallback,
+            String databaseFile, boolean debug, SafetyLimits safetyLimits) {
+        this(defaultLocale, followClientLocale, localeAliases, overrideDrops, overrideSpawning, overrideBoss,
+                spawnCheckPeriodTicks, spawnLocationAttempts, defaultMinSpawnDistance, defaultMaxSpawnDistance,
+                dropOverflowAtFeet, missingImageFallback, databaseFile, debug, safetyLimits,
+                PerformanceSettings.defaults());
     }
 
     /** 兼容已有调用；未显式传入时使用文档默认安全上限。 */
@@ -87,7 +101,8 @@ public record PluginSettings(
                 config.getString("Text.Missing-Image-Fallback", "<?>"),
                 config.getString("Database.File", "data.db"),
                 config.getBoolean("Debug", false),
-                SafetyLimits.load(config));
+                SafetyLimits.load(config),
+                PerformanceSettings.load(config));
     }
 
     /** 统一客户端语言代码的大小写与分隔符。 */

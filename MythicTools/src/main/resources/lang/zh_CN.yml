@@ -7,6 +7,7 @@ common:
   invalid-id: "<!i><red>ID 只能包含英文字母、数字、下划线和短横线"
   cancelled: "<!i><yellow>操作已取消"
   saved: "<!i><green>已保存"
+  saving: "<!i><yellow>配置正在保存或重载，请稍候"
   deleted: "<!i><green>已删除 {id}"
   not-found: "<!i><red>未找到: {id}"
   config-error: "<!i><red>配置错误: {reason}"

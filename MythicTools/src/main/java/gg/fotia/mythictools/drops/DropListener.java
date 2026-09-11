@@ -98,7 +98,12 @@ public final class DropListener implements Listener {
                 firstDefeatRewards.award(
                         FirstDefeatSource.mob(rule.mobId()), rule.firstDefeatRewards(),
                         List.of(new RewardRecipient(killer.getUniqueId(), killer.getName(), killer)),
-                        location, Map.of("mob", rule.mobId(), "location", formatLocation(location)), false);
+                        location, Map.of("mob", rule.mobId(), "location", formatLocation(location)), false)
+                        .exceptionally(failure -> {
+                            org.bukkit.Bukkit.getLogger().log(java.util.logging.Level.SEVERE,
+                                    "[MythicTools] 首次击败奖励处理失败: " + rule.mobId(), failure);
+                            return null;
+                        });
             }
         });
     }

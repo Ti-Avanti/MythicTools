@@ -1,13 +1,14 @@
 package gg.fotia.mythictools.runtime;
 
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /** 记录确切任务句柄，并用代际令牌阻断已取消回调。 */
 public final class OwnedTasks implements AutoCloseable {
     private final TaskScheduler scheduler;
-    private final List<OwnedHandle> handles = new ArrayList<>();
+    private final Set<OwnedHandle> handles = new LinkedHashSet<>();
     private long generation;
     private boolean accepting = true;
 

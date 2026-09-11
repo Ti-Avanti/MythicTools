@@ -96,7 +96,7 @@ public final class BossRepository implements BossConfigView {
         Map<String, BossConfig> bosses = new LinkedHashMap<>();
         List<ConfigDiagnostic> diagnostics = new ArrayList<>();
         File directory = new File(context.dataFolder(), "bosses");
-        File[] files = directory.listFiles((ignored, name) -> name.toLowerCase(Locale.ROOT).endsWith(".yml"));
+        File[] files = YamlFiles.list(directory);
         if (files == null) {
             return new PreparedSnapshot<>(BossSnapshot.empty(), ConfigLoadReport.empty());
         }

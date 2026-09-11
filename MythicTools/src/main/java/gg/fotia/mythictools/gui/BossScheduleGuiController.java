@@ -191,10 +191,15 @@ final class BossScheduleGuiController {
         try {
             EditorSession working = session.withYaml(context.sessionService.copyYaml(session.yaml));
             settings.applyTo(working.yaml, pointId);
-            context.sessionService.persistSession(player, working);
-            context.messages.send(player, "common.saved", Map.of());
-            context.sessionService.refreshSession(player, session,
-                    refreshed -> openBossTimeWindowList(player, refreshed, pointId, page));
+            context.sessionService.persistSession(player, working, () -> {
+                context.messages.send(player, "common.saved", Map.of());
+                context.sessionService.refreshSession(player, session,
+                        refreshed -> openBossTimeWindowList(player, refreshed, pointId, page));
+            }, exception -> {
+                context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
+                context.sessionService.refreshAfterFailure(player, session,
+                        refreshed -> openBossTimeWindowList(player, refreshed, pointId, page));
+            });
         } catch (IOException | RuntimeException exception) {
             context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
             context.sessionService.refreshAfterFailure(player, session,
@@ -256,11 +261,17 @@ final class BossScheduleGuiController {
             try {
                 EditorSession working = session.withYaml(context.sessionService.copyYaml(session.yaml));
                 draft.applyTo(working.yaml, timeWindowPath(pointId, holder.id));
-                context.sessionService.persistSession(player, working);
-                context.sessions.timeWindowDrafts.remove(player.getUniqueId());
-                context.messages.send(player, "common.saved", Map.of());
-                context.sessionService.refreshSession(player, session,
-                        refreshed -> openBossTimeWindowList(player, refreshed, pointId, 0));
+                context.sessionService.persistSession(player, working, () -> {
+                    context.sessions.timeWindowDrafts.remove(player.getUniqueId());
+                    context.messages.send(player, "common.saved", Map.of());
+                    context.sessionService.refreshSession(player, session,
+                            refreshed -> openBossTimeWindowList(player, refreshed, pointId, 0));
+                }, exception -> {
+                    context.messages.send(player, "common.config-error",
+                            Map.of("reason", exception.getMessage()));
+                    context.sessionService.refreshAfterFailure(player, session,
+                            refreshed -> openBossTimeWindowEditor(player, refreshed, pointId, holder.id, draft));
+                });
             } catch (IOException | RuntimeException exception) {
                 context.messages.send(player, "common.config-error",
                         Map.of("reason", exception.getMessage()));
@@ -311,10 +322,16 @@ final class BossScheduleGuiController {
             try {
                 EditorSession working = session.withYaml(context.sessionService.copyYaml(session.yaml));
                 working.yaml.set(timeWindowPath(holder.context, holder.id), null);
-                context.sessionService.persistSession(player, working);
-                context.messages.send(player, "common.deleted", Map.of("id", holder.id));
-                context.sessionService.refreshSession(player, session,
-                        refreshed -> openBossTimeWindowList(player, refreshed, holder.context, holder.page));
+                context.sessionService.persistSession(player, working, () -> {
+                    context.messages.send(player, "common.deleted", Map.of("id", holder.id));
+                    context.sessionService.refreshSession(player, session,
+                            refreshed -> openBossTimeWindowList(player, refreshed, holder.context, holder.page));
+                }, exception -> {
+                    context.messages.send(player, "common.config-error",
+                            Map.of("reason", exception.getMessage()));
+                    context.sessionService.refreshAfterFailure(player, session,
+                            refreshed -> openBossTimeWindowList(player, refreshed, holder.context, holder.page));
+                });
             } catch (IOException | RuntimeException exception) {
                 context.messages.send(player, "common.config-error",
                         Map.of("reason", exception.getMessage()));

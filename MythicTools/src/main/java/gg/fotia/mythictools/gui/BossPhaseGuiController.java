@@ -195,13 +195,18 @@ final class BossPhaseGuiController {
         try {
             EditorSession working = session.withYaml(context.sessionService.copyYaml(session.yaml));
             int savedIndex = draft.applyTo(working.yaml, index);
-            context.sessionService.persistSession(player, working);
-            context.sessions.bossPhaseDrafts.remove(player.getUniqueId());
-            context.messages.send(player, "common.saved", Map.of());
-            int pageSize = context.screens.template("boss-phase-list").slots('e').size();
-            int returnPage = Math.max(0, savedIndex / pageSize);
-            context.sessionService.refreshSession(player, session,
-                    refreshed -> openBossPhaseList(player, refreshed, returnPage));
+            context.sessionService.persistSession(player, working, () -> {
+                context.sessions.bossPhaseDrafts.remove(player.getUniqueId());
+                context.messages.send(player, "common.saved", Map.of());
+                int pageSize = context.screens.template("boss-phase-list").slots('e').size();
+                int returnPage = Math.max(0, savedIndex / pageSize);
+                context.sessionService.refreshSession(player, session,
+                        refreshed -> openBossPhaseList(player, refreshed, returnPage));
+            }, exception -> {
+                context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
+                context.sessionService.refreshAfterFailure(player, session,
+                        refreshed -> openBossPhaseEditor(player, refreshed, index, draft));
+            });
         } catch (IOException | RuntimeException exception) {
             context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
             context.sessionService.refreshAfterFailure(player, session,
@@ -227,12 +232,17 @@ final class BossPhaseGuiController {
             EditorSession working = session.withYaml(context.sessionService.copyYaml(session.yaml));
             int resolvedIndex = draft.applyTo(working.yaml, index);
             int movedIndex = BossPhaseDraft.move(working.yaml, resolvedIndex, offset);
-            context.sessionService.persistSession(player, working);
-            context.messages.send(player, "common.saved", Map.of());
-            context.sessionService.refreshSession(player, session, refreshed -> {
-                BossPhaseDraft moved = BossPhaseDraft.load(refreshed.yaml, movedIndex);
-                context.sessions.bossPhaseDrafts.put(player.getUniqueId(), moved);
-                openBossPhaseEditor(player, refreshed, movedIndex, moved);
+            context.sessionService.persistSession(player, working, () -> {
+                context.messages.send(player, "common.saved", Map.of());
+                context.sessionService.refreshSession(player, session, refreshed -> {
+                    BossPhaseDraft moved = BossPhaseDraft.load(refreshed.yaml, movedIndex);
+                    context.sessions.bossPhaseDrafts.put(player.getUniqueId(), moved);
+                    openBossPhaseEditor(player, refreshed, movedIndex, moved);
+                });
+            }, exception -> {
+                context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
+                context.sessionService.refreshAfterFailure(player, session,
+                        refreshed -> openBossPhaseEditor(player, refreshed, index, draft));
             });
         } catch (IOException | RuntimeException exception) {
             context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
@@ -274,10 +284,15 @@ final class BossPhaseGuiController {
         try {
             EditorSession working = session.withYaml(context.sessionService.copyYaml(session.yaml));
             BossPhaseDraft.remove(working.yaml, Integer.parseInt(holder.id));
-            context.sessionService.persistSession(player, working);
-            context.messages.send(player, "common.deleted", Map.of("id", Integer.parseInt(holder.id) + 1));
-            context.sessionService.refreshSession(player, session,
-                    refreshed -> openBossPhaseList(player, refreshed, holder.page));
+            context.sessionService.persistSession(player, working, () -> {
+                context.messages.send(player, "common.deleted", Map.of("id", Integer.parseInt(holder.id) + 1));
+                context.sessionService.refreshSession(player, session,
+                        refreshed -> openBossPhaseList(player, refreshed, holder.page));
+            }, exception -> {
+                context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
+                context.sessionService.refreshAfterFailure(player, session,
+                        refreshed -> openBossPhaseList(player, refreshed, holder.page));
+            });
         } catch (IOException | RuntimeException exception) {
             context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
             context.sessionService.refreshAfterFailure(player, session,

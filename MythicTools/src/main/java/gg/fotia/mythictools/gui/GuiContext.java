@@ -35,6 +35,7 @@ final class GuiContext {
     final EditorValueFormats values;
     final GuiScreenSupport screens;
     final EditorSessionService sessionService;
+    boolean closed;
 
     CoreGuiController core;
     EditorSelectorController selector;

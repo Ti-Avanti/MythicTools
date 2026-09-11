@@ -1,6 +1,7 @@
 package gg.fotia.mythictools.storage;
 
 import gg.fotia.mythictools.runtime.OwnedTasks;
+import gg.fotia.mythictools.storage.PendingRewardSqlStore.CorruptRow;
 import gg.fotia.mythictools.runtime.BukkitTaskScheduler;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -12,7 +13,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,6 +44,7 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
     private final ExecutorService databaseExecutor;
     private final DeliveryScheduler deliveryScheduler;
     private final Connection connection;
+    private final PendingRewardSqlStore sql;
     private final ItemCodec codec;
     private final RewardJournal journal;
     private final Duration closeTimeout;
@@ -125,9 +126,10 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
             throw exception;
         }
         connection = opened;
+        sql = new PendingRewardSqlStore(connection, logger);
         try {
-            configureConnection();
-            initializeSchema();
+            sql.configureConnection();
+            sql.initializeSchema();
             replayJournal();
         } catch (SQLException | RuntimeException exception) {
             try {
@@ -175,6 +177,10 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
 
     private void runQueueTask(UUID playerId, List<ItemStack> items, CompletableFuture<QueueResult> result) {
         databaseTaskThread.set(true);
+        synchronized (lifecycleMonitor) {
+            // 已开始的写入由实际落盘结果完成，关闭超时不能提前触发重复补偿。
+            pendingQueueResults.remove(result);
+        }
         QueueResult outcome;
         try {
             try {
@@ -209,16 +215,21 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
             if (closing) {
                 return QueueResult.CLOSING;
             }
-            JournalBatch batch;
-            try {
-                batch = journal.append(playerId, serialized);
-            } catch (IOException | RuntimeException exception) {
-                logger.log(Level.SEVERE, "无法将离线奖励强制写入持久日志", exception);
-                return QueueResult.JOURNAL_FAILED;
-            }
-            submitMigrationLocked(batch);
-            return QueueResult.STORED;
         }
+        JournalBatch batch;
+        try {
+            // 已接纳任务计数保证资源存活；文件 I/O 不持有主线程也要获取的生命周期锁。
+            batch = journal.append(playerId, serialized);
+        } catch (IOException | RuntimeException exception) {
+            logger.log(Level.SEVERE, "无法将离线奖励强制写入持久日志", exception);
+            return QueueResult.JOURNAL_FAILED;
+        }
+        synchronized (lifecycleMonitor) {
+            if (!closing) {
+                submitMigrationLocked(batch);
+            }
+        }
+        return QueueResult.STORED;
     }
 
     @Override
@@ -249,7 +260,8 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
                 activeClaims.put(playerId, completion);
                 admittedDatabaseTasks++;
                 try {
-                    databaseExecutor.execute(() -> runClaimLoadTask(playerId, delivery, completion));
+                    databaseExecutor.execute(() -> runClaimLoadTask(
+                            playerId, delivery, completion, new ClaimCursor(0L, -1L)));
                     status = ClaimResult.Status.ACCEPTED;
                 } catch (RejectedExecutionException exception) {
                     admittedDatabaseTasks--;
@@ -267,56 +279,6 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
         return new ClaimResult(status, completion);
     }
 
-    /** WAL + NORMAL 将每次提交的强制刷盘从两次降为零到一次；busy_timeout 容忍外部工具短暂锁库。 */
-    private void configureConnection() throws SQLException {
-        try (Statement statement = connection.createStatement()) {
-            statement.execute("PRAGMA journal_mode=WAL");
-            statement.execute("PRAGMA synchronous=NORMAL");
-            statement.execute("PRAGMA busy_timeout=5000");
-        }
-    }
-
-    private void initializeSchema() throws SQLException {
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate("CREATE TABLE IF NOT EXISTS pending_rewards ("
-                    + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + "player_uuid TEXT NOT NULL, item BLOB NOT NULL, created_at INTEGER NOT NULL, "
-                    + "batch_id TEXT, item_index INTEGER)");
-        }
-        addColumnIfMissing("batch_id", "TEXT");
-        addColumnIfMissing("item_index", "INTEGER");
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate("CREATE INDEX IF NOT EXISTS idx_pending_player "
-                    + "ON pending_rewards(player_uuid)");
-            statement.executeUpdate("CREATE UNIQUE INDEX IF NOT EXISTS idx_pending_batch_item "
-                    + "ON pending_rewards(batch_id, item_index) WHERE batch_id IS NOT NULL");
-            statement.executeUpdate("CREATE TABLE IF NOT EXISTS pending_reward_quarantine ("
-                    + "id INTEGER PRIMARY KEY AUTOINCREMENT, original_id INTEGER NOT NULL, "
-                    + "player_uuid TEXT NOT NULL, item BLOB NOT NULL, created_at INTEGER NOT NULL, "
-                    + "quarantined_at INTEGER NOT NULL, error TEXT NOT NULL)");
-            statement.executeUpdate("CREATE INDEX IF NOT EXISTS idx_pending_quarantine_player "
-                    + "ON pending_reward_quarantine(player_uuid)");
-        }
-    }
-
-    private void addColumnIfMissing(String column, String type) throws SQLException {
-        boolean found = false;
-        try (Statement statement = connection.createStatement();
-             ResultSet columns = statement.executeQuery("PRAGMA table_info(pending_rewards)")) {
-            while (columns.next()) {
-                if (column.equalsIgnoreCase(columns.getString("name"))) {
-                    found = true;
-                    break;
-                }
-            }
-        }
-        if (!found) {
-            try (Statement statement = connection.createStatement()) {
-                statement.executeUpdate("ALTER TABLE pending_rewards ADD COLUMN " + column + " " + type);
-            }
-        }
-    }
-
     /** 启动重放：全部批次先入库，再一次性压缩日志，避免逐批全量重写。 */
     private void replayJournal() {
         List<JournalBatch> batches = journal.batches();
@@ -326,7 +288,7 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
         List<UUID> migrated = new ArrayList<>();
         for (JournalBatch batch : batches) {
             try {
-                insertJournalBatchTransaction(batch);
+                sql.insertJournalBatchTransaction(batch);
                 migrated.add(batch.batchId());
             } catch (SQLException | RuntimeException exception) {
                 logger.log(Level.SEVERE, "无法将持久日志迁移到 SQLite，稍后自动重试", exception);
@@ -363,7 +325,7 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
 
     private void migrateBatch(JournalBatch batch, int attempt) {
         try {
-            insertJournalBatchTransaction(batch);
+            sql.insertJournalBatchTransaction(batch);
             journal.remove(batch.batchId());
             if (attempt > 1) {
                 logger.info("离线奖励日志批次已在第 " + attempt + " 次尝试后成功迁移: " + batch.batchId());
@@ -411,13 +373,15 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
     private void runClaimLoadTask(
             UUID playerId,
             PendingRewardDelivery delivery,
-            CompletableFuture<Void> completion) {
+            CompletableFuture<Void> completion,
+            ClaimCursor cursor) {
         databaseTaskThread.set(true);
         DeliveryWork work = null;
         try {
             try {
                 while (true) {
-                    LoadResult loaded = loadClaim(playerId, delivery, completion);
+                    LoadResult loaded = loadClaim(playerId, delivery, completion, cursor);
+                    cursor = loaded.cursor();
                     work = loaded.work();
                     if (work != null || !loaded.retryLoad()) {
                         break;
@@ -441,17 +405,33 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
     private LoadResult loadClaim(
             UUID playerId,
             PendingRewardDelivery delivery,
-            CompletableFuture<Void> completion) {
+            CompletableFuture<Void> completion,
+            ClaimCursor cursor) {
         List<PendingRow> validRows = new ArrayList<>();
         List<CorruptRow> corruptRows = new ArrayList<>();
+        long upperId = cursor.upperId();
+        long lastId = cursor.afterId();
         synchronized (connection) {
-            try (PreparedStatement query = connection.prepareStatement(
+            try {
+                if (upperId < 0L) {
+                    try (PreparedStatement maximum = connection.prepareStatement(
+                            "SELECT COALESCE(MAX(id), 0) FROM pending_rewards WHERE player_uuid = ?")) {
+                        maximum.setString(1, playerId.toString());
+                        try (ResultSet result = maximum.executeQuery()) {
+                            upperId = result.next() ? result.getLong(1) : 0L;
+                        }
+                    }
+                }
+                try (PreparedStatement query = connection.prepareStatement(
                     "SELECT id, item, created_at FROM pending_rewards "
-                            + "WHERE player_uuid = ? ORDER BY id LIMIT " + CLAIM_BATCH_LIMIT)) {
+                            + "WHERE player_uuid = ? AND id > ? AND id <= ? ORDER BY id LIMIT " + CLAIM_BATCH_LIMIT)) {
                 query.setString(1, playerId.toString());
+                query.setLong(2, lastId);
+                query.setLong(3, upperId);
                 try (ResultSet results = query.executeQuery()) {
                     while (results.next()) {
                         long id = results.getLong("id");
+                        lastId = id;
                         byte[] bytes = results.getBytes("item");
                         try {
                             ItemStack item = Objects.requireNonNull(codec.deserialize(bytes), "decoded item");
@@ -467,22 +447,24 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
                     }
                 }
                 if (!corruptRows.isEmpty()) {
-                    quarantineRows(playerId, corruptRows);
+                    sql.quarantineRows(playerId, corruptRows);
+                }
                 }
             } catch (SQLException exception) {
                 logger.log(Level.SEVERE, "无法读取或隔离离线奖励，原始有效记录已保留", exception);
-                return new LoadResult(null, false);
+                return new LoadResult(null, false, cursor);
             }
         }
 
-        boolean batchFull = validRows.size() + corruptRows.size() >= CLAIM_BATCH_LIMIT;
+        ClaimCursor next = new ClaimCursor(lastId, upperId);
+        boolean batchFull = lastId < upperId && validRows.size() + corruptRows.size() >= CLAIM_BATCH_LIMIT;
         if (validRows.isEmpty()) {
             // 整批都是损坏行且已隔离时继续读取下一批，隔离保证了循环单调推进。
-            return new LoadResult(null, batchFull);
+            return new LoadResult(null, batchFull, next);
         }
         List<ItemStack> items = validRows.stream().map(PendingRow::item).toList();
         return new LoadResult(
-                new DeliveryWork(playerId, validRows, items, delivery, completion, batchFull), false);
+                new DeliveryWork(playerId, validRows, items, delivery, completion, batchFull, next), false, next);
     }
 
     private boolean scheduleDelivery(DeliveryWork work) {
@@ -529,10 +511,12 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
 
         boolean settlementSubmitted = false;
         try {
+            long attemptedAmount = work.items().stream().mapToLong(ItemStack::getAmount).sum();
             List<ItemStack> leftovers = Objects.requireNonNull(
                     work.delivery().deliver(List.copyOf(work.items())), "delivery leftovers");
             List<byte[]> serializedLeftovers = List.copyOf(serializeAll(leftovers));
-            settlementSubmitted = submitSettlement(work, serializedLeftovers);
+            boolean progressed = leftovers.stream().mapToLong(ItemStack::getAmount).sum() < attemptedAmount;
+            settlementSubmitted = submitSettlement(work, serializedLeftovers, progressed);
         } catch (IOException | RuntimeException exception) {
             logger.log(Level.SEVERE, "离线奖励交付或剩余物品快照失败，原始记录已保留", exception);
         } finally {
@@ -543,7 +527,7 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
         }
     }
 
-    private boolean submitSettlement(DeliveryWork work, List<byte[]> serializedLeftovers) {
+    private boolean submitSettlement(DeliveryWork work, List<byte[]> serializedLeftovers, boolean progressed) {
         synchronized (lifecycleMonitor) {
             if (closing) {
                 return false;
@@ -551,7 +535,7 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
             admittedDatabaseTasks++;
             try {
                 databaseExecutor.execute(
-                        () -> runSettlementTask(work, serializedLeftovers));
+                        () -> runSettlementTask(work, serializedLeftovers, progressed));
                 return true;
             } catch (RejectedExecutionException exception) {
                 admittedDatabaseTasks--;
@@ -562,13 +546,13 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
         }
     }
 
-    private void runSettlementTask(DeliveryWork work, List<byte[]> serializedLeftovers) {
+    private void runSettlementTask(DeliveryWork work, List<byte[]> serializedLeftovers, boolean progressed) {
         databaseTaskThread.set(true);
         boolean continueClaim = false;
         try {
             try {
-                replaceRows(work.playerId(), work.rows(), serializedLeftovers);
-                continueClaim = work.mayHaveMore();
+                sql.replaceRows(work.playerId(), work.rows().stream().map(PendingRow::id).toList(), serializedLeftovers);
+                continueClaim = work.mayHaveMore() && progressed;
             } catch (SQLException | RuntimeException exception) {
                 logger.log(Level.SEVERE, "无法结算离线奖励，原始记录已保留", exception);
             }
@@ -593,7 +577,7 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
                 admittedDatabaseTasks++;
                 try {
                     databaseExecutor.execute(() -> runClaimLoadTask(
-                            work.playerId(), work.delivery(), work.completion()));
+                            work.playerId(), work.delivery(), work.completion(), work.cursor()));
                     return;
                 } catch (RejectedExecutionException exception) {
                     admittedDatabaseTasks--;
@@ -603,116 +587,6 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
             }
         }
         finishClaim(work.playerId(), work.completion());
-    }
-
-    private void insertJournalBatchTransaction(JournalBatch batch) throws SQLException {
-        synchronized (connection) {
-            boolean previousAutoCommit = connection.getAutoCommit();
-            connection.setAutoCommit(false);
-            try (PreparedStatement insert = connection.prepareStatement(
-                    "INSERT OR IGNORE INTO pending_rewards("
-                            + "player_uuid, item, created_at, batch_id, item_index) "
-                            + "VALUES(?, ?, ?, ?, ?)")) {
-                long createdAt = System.currentTimeMillis();
-                List<byte[]> payloads = batch.payloadsView();
-                for (int index = 0; index < payloads.size(); index++) {
-                    insert.setString(1, batch.playerId().toString());
-                    insert.setBytes(2, payloads.get(index));
-                    insert.setLong(3, createdAt);
-                    insert.setString(4, batch.batchId().toString());
-                    insert.setInt(5, index);
-                    insert.addBatch();
-                }
-                insert.executeBatch();
-                connection.commit();
-            } catch (SQLException | RuntimeException exception) {
-                rollback(exception);
-                throw exception;
-            } finally {
-                restoreAutoCommit(previousAutoCommit);
-            }
-        }
-    }
-
-    private void replaceRows(UUID playerId, List<PendingRow> rows, List<byte[]> leftovers)
-            throws SQLException {
-        synchronized (connection) {
-            boolean previousAutoCommit = connection.getAutoCommit();
-            connection.setAutoCommit(false);
-            try {
-                deleteClaimedRows(playerId, rows);
-                insertRows(playerId, leftovers);
-                connection.commit();
-            } catch (SQLException | RuntimeException exception) {
-                rollback(exception);
-                throw exception;
-            } finally {
-                restoreAutoCommit(previousAutoCommit);
-            }
-        }
-    }
-
-    private void quarantineRows(UUID playerId, List<CorruptRow> rows) throws SQLException {
-        boolean previousAutoCommit = connection.getAutoCommit();
-        connection.setAutoCommit(false);
-        try (PreparedStatement insert = connection.prepareStatement(
-                     "INSERT INTO pending_reward_quarantine("
-                             + "original_id, player_uuid, item, created_at, quarantined_at, error) "
-                             + "VALUES(?, ?, ?, ?, ?, ?)");
-             PreparedStatement delete = connection.prepareStatement(
-                     "DELETE FROM pending_rewards WHERE id = ? AND player_uuid = ?")) {
-            long quarantinedAt = System.currentTimeMillis();
-            for (CorruptRow row : rows) {
-                insert.setLong(1, row.id());
-                insert.setString(2, playerId.toString());
-                insert.setBytes(3, row.bytes());
-                insert.setLong(4, row.createdAt());
-                insert.setLong(5, quarantinedAt);
-                insert.setString(6, row.error());
-                insert.executeUpdate();
-                delete.setLong(1, row.id());
-                delete.setString(2, playerId.toString());
-                if (delete.executeUpdate() != 1) {
-                    throw new SQLException("损坏奖励原始记录已发生变化: " + row.id());
-                }
-            }
-            connection.commit();
-        } catch (SQLException | RuntimeException exception) {
-            rollback(exception);
-            throw exception;
-        } finally {
-            restoreAutoCommit(previousAutoCommit);
-        }
-    }
-
-    private void insertRows(UUID playerId, List<byte[]> serialized) throws SQLException {
-        if (serialized.isEmpty()) {
-            return;
-        }
-        try (PreparedStatement insert = connection.prepareStatement(
-                "INSERT INTO pending_rewards(player_uuid, item, created_at) VALUES(?, ?, ?)")) {
-            long createdAt = System.currentTimeMillis();
-            for (byte[] bytes : serialized) {
-                insert.setString(1, playerId.toString());
-                insert.setBytes(2, bytes);
-                insert.setLong(3, createdAt);
-                insert.addBatch();
-            }
-            insert.executeBatch();
-        }
-    }
-
-    private void deleteClaimedRows(UUID playerId, List<PendingRow> rows) throws SQLException {
-        try (PreparedStatement delete = connection.prepareStatement(
-                "DELETE FROM pending_rewards WHERE id = ? AND player_uuid = ?")) {
-            for (PendingRow row : rows) {
-                delete.setLong(1, row.id());
-                delete.setString(2, playerId.toString());
-                if (delete.executeUpdate() != 1) {
-                    throw new SQLException("待领取奖励原始记录已发生变化: " + row.id());
-                }
-            }
-        }
     }
 
     private List<byte[]> serializeAll(List<ItemStack> items) throws IOException {
@@ -747,22 +621,6 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
             lifecycleMonitor.notifyAll();
         }
         completion.complete(null);
-    }
-
-    private void rollback(Exception exception) {
-        try {
-            connection.rollback();
-        } catch (SQLException rollbackException) {
-            exception.addSuppressed(rollbackException);
-        }
-    }
-
-    private void restoreAutoCommit(boolean autoCommit) {
-        try {
-            connection.setAutoCommit(autoCommit);
-        } catch (SQLException exception) {
-            logger.log(Level.WARNING, "恢复 SQLite 自动提交失败", exception);
-        }
     }
 
     @Override
@@ -976,23 +834,24 @@ public final class PendingRewardRepository implements PendingRewardQueue, AutoCl
     private record PendingRow(long id, ItemStack item) {
     }
 
-    private record CorruptRow(long id, byte[] bytes, long createdAt, String error) {
-    }
-
     private record DeliveryWork(
             UUID playerId,
             List<PendingRow> rows,
             List<ItemStack> items,
             PendingRewardDelivery delivery,
             CompletableFuture<Void> completion,
-            boolean mayHaveMore) {
+            boolean mayHaveMore,
+            ClaimCursor cursor) {
         private DeliveryWork {
             rows = List.copyOf(rows);
             items = List.copyOf(items);
         }
     }
 
-    private record LoadResult(DeliveryWork work, boolean retryLoad) {
+    private record ClaimCursor(long afterId, long upperId) {
+    }
+
+    private record LoadResult(DeliveryWork work, boolean retryLoad, ClaimCursor cursor) {
     }
 
     private static final class ScheduledDelivery {

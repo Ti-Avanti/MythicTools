@@ -245,10 +245,16 @@ final class RewardGuiController {
             try {
                 EditorSession working = session.withYaml(context.sessionService.copyYaml(session.yaml));
                 working.yaml.set("entries." + holder.id, null);
-                context.sessionService.persistSession(player, working);
-                context.messages.send(player, "common.deleted", Map.of("id", holder.id));
-                context.sessionService.refreshSession(player, session,
-                        refreshed -> openRewardList(player, refreshed, category, holder.page));
+                context.sessionService.persistSession(player, working, () -> {
+                    context.messages.send(player, "common.deleted", Map.of("id", holder.id));
+                    context.sessionService.refreshSession(player, session,
+                            refreshed -> openRewardList(player, refreshed, category, holder.page));
+                }, exception -> {
+                    context.messages.send(player, "common.config-error",
+                            Map.of("reason", exception.getMessage()));
+                    context.sessionService.refreshAfterFailure(player, session,
+                            refreshed -> openRewardList(player, refreshed, category, holder.page));
+                });
             } catch (IOException | RuntimeException exception) {
                 context.messages.send(player, "common.config-error",
                         Map.of("reason", exception.getMessage()));
@@ -412,11 +418,16 @@ final class RewardGuiController {
         try {
             EditorSession working = session.withYaml(context.sessionService.copyYaml(session.yaml));
             draft.applyTo(working.yaml, "entries." + entryId);
-            context.sessionService.persistSession(player, working);
-            context.sessions.rewardDrafts.remove(player.getUniqueId());
-            context.messages.send(player, "common.saved", Map.of());
-            context.sessionService.refreshSession(player, session,
-                    refreshed -> openRewardList(player, refreshed, category, 0));
+            context.sessionService.persistSession(player, working, () -> {
+                context.sessions.rewardDrafts.remove(player.getUniqueId());
+                context.messages.send(player, "common.saved", Map.of());
+                context.sessionService.refreshSession(player, session,
+                        refreshed -> openRewardList(player, refreshed, category, 0));
+            }, exception -> {
+                context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
+                context.sessionService.refreshAfterFailure(player, session,
+                        refreshed -> openRewardEditor(player, refreshed, category, entryId, draft));
+            });
         } catch (IOException | RuntimeException exception) {
             context.messages.send(player, "common.config-error", Map.of("reason", exception.getMessage()));
             context.sessionService.refreshAfterFailure(player, session,

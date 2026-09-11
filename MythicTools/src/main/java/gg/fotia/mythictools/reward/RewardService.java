@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -90,6 +91,14 @@ public final class RewardService {
             Location groundLocation,
             Map<String, ?> variables,
             boolean forceInventory) {
+        deliverTracked(playerId, playerName, onlinePlayer, grants, groundLocation, variables, forceInventory);
+    }
+
+    /** 返回背包交付或持久队列接管完成信号，供首次击败待发记录确认使用。 */
+    public CompletionStage<Void> deliverTracked(
+            UUID playerId, String playerName, Player onlinePlayer, List<RewardGrant> grants,
+            Location groundLocation, Map<String, ?> variables, boolean forceInventory) {
+        Player recipient = onlinePlayer;
         OfflinePlayer placeholderContext = null;
         List<ItemStack> pendingItems = new ArrayList<>();
         String locale = onlinePlayer == null ? settings.defaultLocale() : locales.locale(onlinePlayer);
@@ -107,8 +116,8 @@ public final class RewardService {
                     for (ItemStack stack : stacks) {
                         Map<Integer, ItemStack> overflow = onlinePlayer.getInventory().addItem(stack);
                         if (settings.dropOverflowAtFeet()) {
-                            overflow.values().forEach(left -> onlinePlayer.getWorld()
-                                    .dropItemNaturally(onlinePlayer.getLocation(), left));
+                            overflow.values().forEach(left -> recipient.getWorld()
+                                    .dropItemNaturally(recipient.getLocation(), left));
                         } else {
                             pendingItems.addAll(overflow.values());
                         }
@@ -129,46 +138,55 @@ public final class RewardService {
             }
         }
         if (!pendingItems.isEmpty() && playerId != null) {
-            queueOrFallback(playerId, onlinePlayer, pendingItems);
+            return queueOrFallback(playerId, onlinePlayer, pendingItems);
         }
+        return CompletableFuture.completedFuture(null);
     }
 
-    private void queueOrFallback(UUID playerId, Player onlinePlayer, List<ItemStack> items) {
+    private CompletionStage<Void> queueOrFallback(UUID playerId, Player onlinePlayer, List<ItemStack> items) {
         List<ItemStack> snapshots = copyItems(items);
         CompletionStage<QueueResult> queued;
         try {
             queued = pendingRewards.queue(playerId, snapshots);
         } catch (RuntimeException exception) {
-            scheduleFallback(playerId, onlinePlayer, snapshots);
-            return;
+            return scheduleFallback(playerId, onlinePlayer, snapshots);
         }
         if (queued == null) {
-            scheduleFallback(playerId, onlinePlayer, snapshots);
-            return;
+            return scheduleFallback(playerId, onlinePlayer, snapshots);
         }
-        queued.whenComplete((result, failure) -> {
-            if (failure != null || result != QueueResult.STORED) {
-                scheduleFallback(playerId, onlinePlayer, snapshots);
-            }
-        });
+        return queued.handle((result, failure) -> failure == null && result == QueueResult.STORED)
+                .thenCompose(stored -> stored ? CompletableFuture.completedFuture(null)
+                        : scheduleFallback(playerId, onlinePlayer, snapshots));
     }
 
-    private void scheduleFallback(UUID playerId, Player onlinePlayer, List<ItemStack> items) {
+    private CompletionStage<Void> scheduleFallback(UUID playerId, Player onlinePlayer, List<ItemStack> items) {
         if (onlinePlayer == null) {
-            retainOrLog(playerId, items);
-            return;
+            return retainOrLog(playerId, items);
         }
+        CompletableFuture<Void> completion = new CompletableFuture<>();
         try {
-            fallbackExecutor.execute(() -> deliverFallback(playerId, onlinePlayer, items));
+            fallbackExecutor.execute(() -> {
+                try {
+                    deliverFallback(playerId, onlinePlayer, items).whenComplete((ignored, failure) -> {
+                        if (failure == null) {
+                            completion.complete(null);
+                        } else {
+                            completion.completeExceptionally(failure);
+                        }
+                    });
+                } catch (RuntimeException exception) {
+                    completion.completeExceptionally(exception);
+                }
+            });
         } catch (RuntimeException exception) {
-            retainOrLog(playerId, items);
+            return retainOrLog(playerId, items);
         }
+        return completion;
     }
 
-    private void deliverFallback(UUID playerId, Player player, List<ItemStack> items) {
+    private CompletionStage<Void> deliverFallback(UUID playerId, Player player, List<ItemStack> items) {
         if (player == null || !player.isOnline()) {
-            retainOrLog(playerId, items);
-            return;
+            return retainOrLog(playerId, items);
         }
         List<ItemStack> retained = new ArrayList<>();
         for (ItemStack item : copyItems(items)) {
@@ -189,29 +207,30 @@ public final class RewardService {
                 }
             }
         }
-        if (!retained.isEmpty()) {
-            retainOrLog(playerId, retained);
-        }
+        return retained.isEmpty() ? CompletableFuture.completedFuture(null) : retainOrLog(playerId, retained);
     }
 
-    private void retainOrLog(UUID playerId, List<ItemStack> items) {
+    private CompletionStage<Void> retainOrLog(UUID playerId, List<ItemStack> items) {
         CompletionStage<QueueResult> retained;
         try {
             retained = pendingRewards.retainForRetry(playerId, copyItems(items));
         } catch (RuntimeException exception) {
             logger.log(Level.SEVERE, "无法持久保存离线奖励，奖励可能无法恢复: " + playerId, exception);
-            return;
+            return CompletableFuture.failedFuture(exception);
         }
         if (retained == null) {
             logger.severe("无法持久保存离线奖励，仓储未返回接管结果: " + playerId);
-            return;
+            return CompletableFuture.failedFuture(new IllegalStateException("奖励仓储未返回接管结果"));
         }
-        retained.whenComplete((result, failure) -> {
+        return retained.handle((result, failure) -> {
             if (failure != null) {
                 logger.log(Level.SEVERE, "无法持久保存离线奖励，奖励可能无法恢复: " + playerId, failure);
+                throw new java.util.concurrent.CompletionException(failure);
             } else if (result != QueueResult.STORED) {
                 logger.severe("无法持久保存离线奖励，仓储接管结果=" + result + ": " + playerId);
+                throw new IllegalStateException("奖励仓储接管失败: " + result);
             }
+            return null;
         });
     }
 

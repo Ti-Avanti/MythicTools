@@ -101,11 +101,17 @@ final class MobMemberGuiController {
             try {
                 EditorSession working = session.withYaml(context.sessionService.copyYaml(session.yaml));
                 draft.applyTo(working.yaml, "members." + holder.id);
-                context.sessionService.persistSession(player, working);
-                context.sessions.mobMemberDrafts.remove(player.getUniqueId());
-                context.messages.send(player, "common.saved", Map.of());
-                context.sessionService.refreshSession(player, session,
-                        refreshed -> openMobMemberList(player, refreshed, 0));
+                context.sessionService.persistSession(player, working, () -> {
+                    context.sessions.mobMemberDrafts.remove(player.getUniqueId());
+                    context.messages.send(player, "common.saved", Map.of());
+                    context.sessionService.refreshSession(player, session,
+                            refreshed -> openMobMemberList(player, refreshed, 0));
+                }, exception -> {
+                    context.messages.send(player, "common.config-error",
+                            Map.of("reason", exception.getMessage()));
+                    context.sessionService.refreshAfterFailure(player, session,
+                            refreshed -> openMobMemberEditor(player, refreshed, holder.id, draft));
+                });
             } catch (IOException | RuntimeException exception) {
                 context.messages.send(player, "common.config-error",
                         Map.of("reason", exception.getMessage()));
@@ -155,10 +161,16 @@ final class MobMemberGuiController {
             try {
                 EditorSession working = session.withYaml(context.sessionService.copyYaml(session.yaml));
                 working.yaml.set("members." + holder.id, null);
-                context.sessionService.persistSession(player, working);
-                context.messages.send(player, "common.deleted", Map.of("id", holder.id));
-                context.sessionService.refreshSession(player, session,
-                        refreshed -> openMobMemberList(player, refreshed, holder.page));
+                context.sessionService.persistSession(player, working, () -> {
+                    context.messages.send(player, "common.deleted", Map.of("id", holder.id));
+                    context.sessionService.refreshSession(player, session,
+                            refreshed -> openMobMemberList(player, refreshed, holder.page));
+                }, exception -> {
+                    context.messages.send(player, "common.config-error",
+                            Map.of("reason", exception.getMessage()));
+                    context.sessionService.refreshAfterFailure(player, session,
+                            refreshed -> openMobMemberList(player, refreshed, holder.page));
+                });
             } catch (IOException | RuntimeException exception) {
                 context.messages.send(player, "common.config-error",
                         Map.of("reason", exception.getMessage()));

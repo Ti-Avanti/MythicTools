@@ -6,6 +6,15 @@ import java.util.Collection;
 public interface SpawningConfigView {
     Collection<BiomeSpawnRule> biomeRules();
 
+    default Collection<BiomeSpawnRule> biomeRules(String world, org.bukkit.block.Biome biome) {
+        return biomeRules().stream().filter(rule -> rule.enabled() && rule.biomes().contains(biome)
+                && (rule.worlds().isEmpty() || rule.worlds().contains(world))).toList();
+    }
+
+    default Object identity() {
+        return this;
+    }
+
     Collection<SpawnPoint> spawnPoints();
 
     SpawnPoint spawnPoint(String id);
