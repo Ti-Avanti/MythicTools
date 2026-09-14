@@ -20,6 +20,10 @@ import gg.fotia.mythictools.gui.GuiRuntimeReloadAction;
 import gg.fotia.mythictools.gui.GuiTemplateRepository;
 import gg.fotia.mythictools.integration.MythicMobGateway;
 import gg.fotia.mythictools.integration.MythicMobsAdapter;
+import gg.fotia.mythictools.integration.WorldGuardRegionLookup;
+import gg.fotia.mythictools.leveling.DistanceLevelListener;
+import gg.fotia.mythictools.leveling.LevelingRepository;
+import gg.fotia.mythictools.leveling.RegionLookup;
 import gg.fotia.mythictools.item.ItemFactory;
 import gg.fotia.mythictools.lang.LocaleService;
 import gg.fotia.mythictools.lang.PlayerLocaleListener;
@@ -67,6 +71,8 @@ public final class PluginRuntime implements ManagedRuntime {
     private final PlayerLocaleListener playerLocaleListener;
     private final DropListener dropListener;
     private final RewardService rewardService;
+    private final LevelingRepository levelingRepository;
+    private final DistanceLevelListener distanceLevels;
     private final OwnedTasks runtimeTasks;
     private final List<Listener> registeredListeners = new ArrayList<>();
     private final AtomicBoolean closed = new AtomicBoolean();
@@ -89,6 +95,7 @@ public final class PluginRuntime implements ManagedRuntime {
             PlayerLocaleListener playerLocaleListener,
             DropListener dropListener,
             RewardService rewardService,
+            LevelingRepository levelingRepository,
             OwnedTasks runtimeTasks) {
         this.plugin = plugin;
         this.settings = settings;
@@ -107,6 +114,8 @@ public final class PluginRuntime implements ManagedRuntime {
         this.playerLocaleListener = playerLocaleListener;
         this.dropListener = dropListener;
         this.rewardService = rewardService;
+        this.levelingRepository = levelingRepository;
+        this.distanceLevels = new DistanceLevelListener(levelingRepository);
         this.runtimeTasks = runtimeTasks;
     }
 
@@ -137,8 +146,20 @@ public final class PluginRuntime implements ManagedRuntime {
                 plugin, settings, mythicMobs, snapshotStore);
         BossRepository bossRepository = new BossRepository(
                 plugin, settings, mythicMobs, rewardRepository, snapshotStore);
+        RegionLookup regions = RegionLookup.unavailable();
+        long cacheMillis = gg.fotia.mythictools.config.ConfigValues.longOrDefault(
+                configuration, "Leveling.Region-Cache-Millis", 1000L, 1L, 60000L);
+        if (Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) {
+            try {
+                regions = new WorldGuardRegionLookup(cacheMillis);
+            } catch (LinkageError error) {
+                plugin.getLogger().warning("WorldGuard 区域桥接不可用，坐标点仍可使用: " + error.getMessage());
+            }
+        }
+        LevelingRepository levelingRepository = new LevelingRepository(
+                gg.fotia.mythictools.config.RepositoryLoadContext.runtime(plugin, mythicMobs), snapshotStore, regions);
         RepositoryReloadCoordinator reloadCoordinator = new RepositoryReloadCoordinator(
-                snapshotStore, rewardRepository, spawningRepository, bossRepository);
+                snapshotStore, rewardRepository, spawningRepository, bossRepository, levelingRepository);
         reloadRepositories(plugin, reloadCoordinator, loadMode);
 
         TaskScheduler scheduler = new BukkitTaskScheduler(plugin);
@@ -186,11 +207,13 @@ public final class PluginRuntime implements ManagedRuntime {
         return new PluginRuntime(
                 plugin, settings, serverVersion, locales, messages, rewardRepository,
                 spawningRepository, bossRepository, reloadCoordinator, spawningManager, bossManager,
-                guiTemplates, chatInput, adminGui, playerLocaleListener, dropListener, rewardService, runtimeTasks);
+                guiTemplates, chatInput, adminGui, playerLocaleListener, dropListener, rewardService,
+                levelingRepository, runtimeTasks);
     }
 
     @Override
     public void activate() {
+        register(distanceLevels);
         register(playerLocaleListener);
         if (settings.overrideSpawning()) {
             register(spawningManager);
@@ -292,6 +315,10 @@ public final class PluginRuntime implements ManagedRuntime {
 
     public RewardService rewardService() {
         return rewardService;
+    }
+
+    public LevelingRepository levelingRepository() {
+        return levelingRepository;
     }
 
     public SpawningRepository spawningRepository() {

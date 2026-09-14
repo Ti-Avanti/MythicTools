@@ -1,0 +1,26 @@
+# 距离等级规则组：文件名 example 即规则组 ID；可复制此文件创建多组规则。
+# 先创建坐标点 / 区域引用，选择怪物与距离来源，再将 enabled 改为 true。
+enabled: false
+# 同一怪物命中多组规则时，先比较最近距离；仅距离相等时使用更高优先级。
+priority: 0
+# MM 怪物内部 ID，可多选；只影响命中的怪物，不限制其生成来源。
+mob-ids: [SkeletalMinion]
+# 引用 spawning/groups 中的怪物组，使用其中所有成员，与 mob-ids 取并集。
+mob-groups: []
+# 引用 leveling/points 与 leveling/regions 中的文件名（不含 .yml）。
+# 可混合绑定多个点和区域；只使用怪物所在世界内最近的有效来源，不叠加距离。
+point-ids: [example]
+region-ids: []
+# replace：覆盖原 MM 等级；add：在原 MM 等级上增加距离带来的等级。
+# 等级只在生成时计算，怪物移动后不再变化。
+level-mode: replace
+# replace 模式的起始等级；add 模式使用原 MM 等级作为起始值。
+base-level: 1.0
+# 安全距离（方块），范围内不增加等级；距离仅计算 X/Z，不计算高度。
+safe-distance: 0.0
+# 超出安全距离后，每满多少方块增加一次等级，不满一步的部分向下取整。
+distance-per-level: 100.0
+# 每一步增加的等级，可使用小数，必须大于 0。
+level-increase: 1.0
+# 等级上限，不得小于 base-level；add 模式不会降低原本已经高于上限的怪物等级。
+max-level: 100.0

@@ -1,0 +1,22 @@
+title-key: gui.leveling-menu.title
+Layout:
+  - '#########'
+  - '#g##p##a#'
+  - '#########'
+  - '####b####'
+items:
+  g:
+    material: EXPERIENCE_BOTTLE
+    display-name-key: gui.leveling-menu.groups-name
+    lore-keys: [gui.leveling-menu.groups-lore]
+  p:
+    material: LODESTONE
+    display-name-key: gui.leveling-menu.points-name
+    lore-keys: [gui.leveling-menu.points-lore]
+  a:
+    material: MAP
+    display-name-key: gui.leveling-menu.regions-name
+    lore-keys: [gui.leveling-menu.regions-lore]
+  b:
+    material: OAK_DOOR
+    display-name-key: gui.leveling-menu.back-name

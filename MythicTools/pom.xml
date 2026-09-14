@@ -1,12 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>gg.fotia</groupId>
     <artifactId>mythictools</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
     <name>MythicTools</name>
     <description>MythicMobs 掉落、刷怪与 Boss 管理工具</description>
 
@@ -20,9 +18,14 @@
         <packetevents.version>2.13.0</packetevents.version>
         <craftengine.version>26.7.2</craftengine.version>
         <sqlite.version>3.46.1.0</sqlite.version>
+        <worldguard.version>7.0.12</worldguard.version>
     </properties>
 
     <repositories>
+        <repository>
+            <id>enginehub</id>
+            <url>https://maven.enginehub.org/repo/</url>
+        </repository>
         <repository>
             <id>papermc</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
@@ -50,6 +53,12 @@
     </repositories>
 
     <dependencies>
+        <dependency>
+            <groupId>com.sk89q.worldguard</groupId>
+            <artifactId>worldguard-bukkit</artifactId>
+            <version>${worldguard.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
@@ -145,7 +154,7 @@
             <version>5.15.2</version>
             <scope>test</scope>
         </dependency>
-    </dependencies>
+    <dependency><groupId>gg.fotia</groupId><artifactId>translator-bridge</artifactId><version>1.0.0</version><scope>provided</scope></dependency></dependencies>
 
     <build>
         <finalName>MythicTools-${project.version}</finalName>
@@ -188,7 +197,7 @@
                             </artifactItems>
                         </configuration>
                     </execution>
-                </executions>
+                <execution><id>fotia-translator-optional-bridge</id><phase>process-classes</phase><goals><goal>unpack</goal></goals><configuration><artifactItems><artifactItem><groupId>gg.fotia</groupId><artifactId>translator-bridge</artifactId><version>1.0.0</version><outputDirectory>${project.build.outputDirectory}</outputDirectory><includes>gg/fotia/translator/bridge/**</includes></artifactItem></artifactItems></configuration></execution></executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -200,15 +209,11 @@
                         <phase>generate-sources</phase>
                         <configuration>
                             <target>
-                                <mkdir dir="${project.build.outputDirectory}"/>
-                                <javac srcdir="${project.basedir}/src/modern/java"
-                                       destdir="${project.build.outputDirectory}"
-                                       includeantruntime="false"
-                                       encoding="${project.build.sourceEncoding}"
-                                       release="${maven.compiler.release}">
+                                <mkdir dir="${project.build.outputDirectory}" />
+                                <javac srcdir="${project.basedir}/src/modern/java" destdir="${project.build.outputDirectory}" includeantruntime="false" encoding="${project.build.sourceEncoding}" release="${maven.compiler.release}">
                                     <classpath>
                                         <fileset dir="${project.build.directory}/modern-spigot-api">
-                                            <include name="spigot-api-*.jar"/>
+                                            <include name="spigot-api-*.jar" />
                                         </fileset>
                                     </classpath>
                                 </javac>
@@ -250,7 +255,7 @@
                                 </filter>
                             </filters>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                             </transformers>
                         </configuration>
                     </execution>

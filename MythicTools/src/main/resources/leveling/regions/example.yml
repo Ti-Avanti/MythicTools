@@ -1,0 +1,8 @@
+# WorldGuard 区域距离来源：文件名 example 是供等级规则组引用的 ID。
+# 需要安装 WorldGuard 7；缺少 WorldGuard 时只跳过区域来源，坐标点照常生效。
+enabled: false
+location:
+  world: world
+# 已存在的 WorldGuard 区域 ID，支持长方体和多边形；不支持 __global__。
+# 区域内水平距离为 0，区域外使用到实际边界的最短水平距离，不计算高度。
+region-id: spawn

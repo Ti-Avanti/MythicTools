@@ -26,8 +26,13 @@ final class EditorSelectorController {
         GuiTemplate template = context.screens.template("selector");
         Set<String> selected = selectedValues(session, field, selectorType);
         LinkedHashSet<String> available = new LinkedHashSet<>(switch (selectorType) {
-            case MOB_GROUP -> context.loadedMobGroupIds.get();
-            case MYTHIC_MOB -> context.mobIds.get();
+            case MOB_GROUP, MOB_GROUPS -> context.loadedMobGroupIds.get();
+            case MYTHIC_MOB, MYTHIC_MOBS -> context.mobIds.get();
+            case LEVEL_POINTS -> context.targets.ids(AdminType.LEVEL_POINT);
+            case LEVEL_REGIONS -> context.targets.ids(AdminType.LEVEL_REGION);
+            case WORLDGUARD_REGION -> context.plugin instanceof gg.fotia.mythictools.MythicToolsPlugin plugin
+                    ? plugin.levelingRepository().worldGuardRegionIds(session.yaml.getString("location.world", ""))
+                    : List.of();
             default -> selectorType.options();
         });
         available.addAll(selected);

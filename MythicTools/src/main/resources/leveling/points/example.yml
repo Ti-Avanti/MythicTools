@@ -1,0 +1,7 @@
+# 坐标距离来源：文件名 example 即点 ID；可复制创建多个点。
+# GUI 新建点会自动填写玩家当前的世界与 X/Z 坐标。
+enabled: false
+location:
+  world: world
+  x: 0.0
+  z: 0.0

@@ -10,6 +10,8 @@ depend:
   - PlaceholderAPI
   - packetevents
 softdepend:
+  - WorldGuard
+  - FotiaTranslator
   - CraftEngine
 libraries:
   - org.xerial:sqlite-jdbc:3.46.1.0
@@ -22,7 +24,7 @@ libraries:
 commands:
   mythictools:
     description: MythicTools 主命令
-    usage: /<command> [gui|reload|info|boss|spawnpoint]
+    usage: /<command> [gui|levels|reload|info|boss|spawnpoint]
     aliases: [mt, mtools]
     permission: mythictools.command
 

@@ -74,6 +74,7 @@ final class GuiScreenSupport {
             case BOSS_PHASE_MODE -> "gui.selector.options.phase-mode." + option;
             case BOSS_INTERMEDIATE_LOOT -> "gui.selector.options.intermediate-loot." + option;
             case BOSS_FINAL_LOOT -> "gui.selector.options.final-loot." + option;
+            case LEVEL_MODE -> "gui.selector.options.level-mode." + option;
             default -> null;
         };
         return key != null && messages.containsText(player, key) ? messages.text(player, key) : option;

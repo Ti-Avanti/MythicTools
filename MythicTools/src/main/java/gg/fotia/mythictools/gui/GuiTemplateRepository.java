@@ -28,7 +28,7 @@ public final class GuiTemplateRepository {
         Map<String, GuiTemplate> loaded = new HashMap<>();
         for (String id : new String[]{
                 "main", "list", "category", "editor", "section-editor", "reward-list",
-                "item-reward-editor", "command-reward-editor", "drops-menu", "spawning-menu",
+                "item-reward-editor", "command-reward-editor", "drops-menu", "spawning-menu", "leveling-menu",
                 "reward-rarity-selector", "reward-option-selector",
                 "reward-grant-mode-selector", "first-defeat-menu",
                 "first-defeat-reward-list", "first-defeat-reward-selector",

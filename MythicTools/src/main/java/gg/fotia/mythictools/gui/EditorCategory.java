@@ -28,6 +28,12 @@ enum EditorCategory {
     MOB_GROUP_AMOUNT(AdminType.MOB_GROUP, "mob-group-amount", exact("amount.min", "amount.max"), null),
     MOB_GROUP_MEMBERS(AdminType.MOB_GROUP, "mob-group-members", ignored -> false, null),
 
+    LEVEL_BASIC(AdminType.LEVEL_GROUP, "level-basic", exact("enabled", "priority"), null),
+    LEVEL_MOBS(AdminType.LEVEL_GROUP, "level-mobs", exact("mob-ids", "mob-groups"), null),
+    LEVEL_ORIGINS(AdminType.LEVEL_GROUP, "level-origins", exact("point-ids", "region-ids"), null),
+    LEVEL_CURVE(AdminType.LEVEL_GROUP, "level-curve",
+            exact("level-mode", "base-level", "safe-distance", "distance-per-level", "level-increase", "max-level"), null),
+
     BOSS_BASIC(AdminType.BOSS, "boss-basic",
             path -> path.equals("display") || path.startsWith("display.")
                     || path.equals("phase-mode") || path.startsWith("phases")

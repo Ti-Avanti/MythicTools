@@ -17,6 +17,12 @@ public enum FieldSelectorType {
     WORLD(false),
     MOB_GROUP(false),
     MYTHIC_MOB(false),
+    MYTHIC_MOBS(true),
+    MOB_GROUPS(true),
+    LEVEL_POINTS(true),
+    LEVEL_REGIONS(true),
+    WORLDGUARD_REGION(false),
+    LEVEL_MODE(false),
     BOSS_PHASE_MODE(false),
     BOSS_INTERMEDIATE_LOOT(false),
     BOSS_FINAL_LOOT(false);
@@ -33,6 +39,15 @@ public enum FieldSelectorType {
 
     /** 根据相对 YAML 字段路径判断是否应打开二级选择菜单。 */
     public static FieldSelectorType fromField(String field) {
+        switch (field) {
+            case "mob-ids": return MYTHIC_MOBS;
+            case "mob-groups": return MOB_GROUPS;
+            case "point-ids": return LEVEL_POINTS;
+            case "region-ids": return LEVEL_REGIONS;
+            case "region-id": return WORLDGUARD_REGION;
+            case "level-mode": return LEVEL_MODE;
+            default: break;
+        }
         if (field.equals("phase-mode")) {
             return BOSS_PHASE_MODE;
         }
@@ -78,6 +93,8 @@ public enum FieldSelectorType {
             values.addAll(List.of("legacy", "none", "mythic"));
         } else if (this == BOSS_FINAL_LOOT) {
             values.addAll(List.of("legacy", "mythictools-only", "mythic-only", "combined"));
+        } else if (this == LEVEL_MODE) {
+            values.addAll(List.of("replace", "add"));
         }
         values.sort(String.CASE_INSENSITIVE_ORDER);
         return List.copyOf(values);

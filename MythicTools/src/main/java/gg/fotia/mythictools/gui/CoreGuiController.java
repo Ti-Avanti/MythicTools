@@ -23,7 +23,7 @@ final class CoreGuiController {
         GuiTemplate template = context.screens.template("main");
         GuiHolder holder = new GuiHolder(GuiView.MAIN, null, null, 0);
         Inventory inventory = context.screens.createInventory(holder, template, player, Map.of());
-        for (char symbol : new char[]{'d', 's', 'b', 'r', 'c'}) {
+        for (char symbol : new char[]{'d', 's', 'b', 'l', 'r', 'c'}) {
             context.screens.fillStatic(inventory, template, symbol, player, Map.of());
         }
         player.openInventory(inventory);
@@ -78,7 +78,7 @@ final class CoreGuiController {
         try {
             EditorSession session = context.targets.loadSession(type, id);
             context.sessions.editors.put(player.getUniqueId(), session);
-            if (type == AdminType.SPAWN_POINT) {
+            if (EditorCategory.forType(type).isEmpty()) {
                 openEditorSession(player, session, null);
             } else {
                 openCategory(player, session);
@@ -96,6 +96,8 @@ final class CoreGuiController {
             openSpawningMenu(player);
         } else if (template.slots('b').contains(slot)) {
             openList(player, AdminType.BOSS, 0);
+        } else if (template.slots('l').contains(slot)) {
+            context.leveling.openMenu(player);
         } else if (template.slots('r').contains(slot)) {
             try {
                 context.fullReloadAction.accept(player);
@@ -157,6 +159,8 @@ final class CoreGuiController {
             } else if (holder.type == AdminType.BIOME_RULE || holder.type == AdminType.SPAWN_POINT
                     || holder.type == AdminType.MOB_GROUP) {
                 openSpawningMenu(player);
+            } else if (holder.type.domain() == gg.fotia.mythictools.config.ConfigDomain.LEVELING) {
+                context.leveling.openMenu(player);
             } else {
                 openMain(player);
             }
@@ -368,6 +372,16 @@ final class CoreGuiController {
                         return;
                     }
                 }
+                if (holder.type == AdminType.LEVEL_POINT || holder.type == AdminType.LEVEL_REGION) {
+                    List<String> references = context.targets.levelReferences(
+                            holder.type == AdminType.LEVEL_POINT ? "point-ids" : "region-ids", holder.id);
+                    if (!references.isEmpty()) {
+                        context.messages.send(player, "gui.leveling-menu.in-use",
+                                Map.of("references", String.join(", ", references)));
+                        openList(player, holder.type, holder.page);
+                        return;
+                    }
+                }
                 EditorTargets.Target deletionTarget = context.targets.target(holder.type, holder.id);
                 try {
                     ReloadRollback.mutate(
@@ -404,7 +418,7 @@ final class CoreGuiController {
             session = context.targets.loadSession(type, id);
             session.markNewlyCreated();
             context.sessions.editors.put(player.getUniqueId(), session);
-            if (type == AdminType.SPAWN_POINT) {
+            if (EditorCategory.forType(type).isEmpty()) {
                 openEditorSession(player, session, null);
             } else {
                 openCategory(player, session);

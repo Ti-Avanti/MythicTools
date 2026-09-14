@@ -88,6 +88,10 @@ public final class AdminGuiManager implements Listener {
         context.core.openMain(player);
     }
 
+    public void openLevelingMenu(Player player) {
+        context.leveling.openMenu(player);
+    }
+
     /** 打开某类配置的分页列表。 */
     public void openList(Player player, AdminType type, int requestedPage) {
         context.core.openList(player, type, requestedPage);
@@ -127,6 +131,7 @@ public final class AdminGuiManager implements Listener {
             case MAIN -> context.core.handleMain(player, rawSlot);
             case DROPS_MENU -> context.core.handleDropsMenu(player, rawSlot);
             case SPAWNING_MENU -> context.core.handleSpawningMenu(player, rawSlot);
+            case LEVELING_MENU -> context.leveling.handleMenu(player, rawSlot);
             case LIST -> context.core.handleList(player, holder, rawSlot, deleteClick);
             case CATEGORY -> context.core.handleCategory(player, holder, rawSlot);
             case EDITOR, SECTION_EDITOR -> context.core.handleEditor(player, holder, rawSlot);

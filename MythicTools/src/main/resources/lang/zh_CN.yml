@@ -49,6 +49,9 @@ gui:
     spawn-point: "固定刷怪点"
     mob-group: "怪物组"
     boss: "Boss"
+    level-group: "等级规则组"
+    level-point: "等级坐标点"
+    level-region: "等级区域引用"
   main:
     title: "<!i><gold>MythicTools 管理"
     drops-name: "<!i><aqua>掉落物管理"
@@ -57,6 +60,8 @@ gui:
     spawning-lore: "<!i><gray>管理群系规则、固定刷怪点与怪物组"
     bosses-name: "<!i><red>Boss 管理"
     bosses-lore: "<!i><gray>管理阶段、生成和奖励"
+    leveling-name: "<!i><light_purple>距离等级"
+    leveling-lore: "<!i><gray>距离坐标点或区域越远，怪物等级越高"
     reload-name: "<!i><yellow>重载配置"
     close-name: "<!i><red>关闭"
   drops-menu:
@@ -139,6 +144,18 @@ gui:
     mob-group-members:
       name: "怪物成员"
       lore: "管理 MythicMob、权重和实时概率"
+    level-basic:
+      name: "启用与优先级"
+      lore: "仅距离相同时比较优先级；请配置完整后再启用"
+    level-mobs:
+      name: "适用怪物"
+      lore: "多选 MM 怪物和已有怪物组，两者取并集"
+    level-origins:
+      name: "距离来源"
+      lore: "多选坐标点和区域引用，只取同世界最近的来源"
+    level-curve:
+      name: "等级公式"
+      lore: "替换或叠加等级、起始等级、安全距离、步长、增量和上限"
   spawning-menu:
     title: "<!i><gold>刷怪管理"
     biome-name: "<!i><green>群系刷怪规则"
@@ -148,6 +165,16 @@ gui:
     group-name: "<!i><light_purple>怪物组"
     group-lore: "<!i><gray>管理可复用的加权随机怪物组合"
     back-name: "<!i><gray>返回主菜单"
+  leveling-menu:
+    title: "<!i><gold>距离等级管理"
+    groups-name: "<!i><light_purple>等级规则组"
+    groups-lore: "<!i><gray>选择 MM 怪物或怪物组、距离来源与等级公式\n<!i><gray>先配置并保存，再启用规则"
+    points-name: "<!i><aqua>坐标点"
+    points-lore: "<!i><gray>管理可复用的距离起点\n<!i><gray>新建时使用你当前的世界与坐标"
+    regions-name: "<!i><green>WorldGuard 区域引用"
+    regions-lore: "<!i><gray>选择世界和已有区域\n<!i><gray>区域内距离为零，区域外按最近边界计算"
+    back-name: "<!i><gray>返回主菜单"
+    in-use: "<!i><red>仍被等级规则组引用，请先移除绑定: {references}"
   mob-drop-group-list:
     title: "<!i><gold>掉落组分配: <white>{id} <gray>第 {page} 页"
     entry-name: "<!i><aqua>{id}"
@@ -432,6 +459,18 @@ gui:
       number: "需要数字"
       map-list: "映射列表格式应为 key=value,key=value;key=value"
     field-labels:
+      mob-ids: "适用 MM 怪物（多选）"
+      mob-groups: "适用怪物组（多选）"
+      point-ids: "坐标点来源（多选）"
+      region-ids: "区域引用来源（多选）"
+      region-id: "WorldGuard 区域"
+      priority: "等距时优先级（越大越优先）"
+      level-mode: "等级计算模式"
+      base-level: "替换模式起始等级"
+      safe-distance: "安全距离（方块）"
+      distance-per-level: "每次升级距离（方块）"
+      level-increase: "每次增加等级"
+      max-level: "等级上限"
       mob-group: "怪物组"
       phase-mode: "阶段模式"
       mythic-native__mob: "原生阶段根 MythicMob"
@@ -534,6 +573,9 @@ gui:
     title: "<!i><gold>选择 {field} <gray>第 {page} 页"
     option-name: "<!i><aqua>{option}"
     options:
+      level-mode:
+        replace: "覆盖 MM 原等级（replace）"
+        add: "在 MM 原等级上增加（add）"
       phase-mode:
         death-respawn: "死亡后切换（death-respawn）"
         mythic-native: "MythicMobs 原生阶段（mythic-native）"

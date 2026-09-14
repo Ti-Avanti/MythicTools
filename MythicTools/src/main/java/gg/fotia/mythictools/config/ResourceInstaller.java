@@ -34,6 +34,7 @@ public final class ResourceInstaller {
             "gui/first-defeat-reward-selector.yml",
             "gui/drops-menu.yml",
             "gui/spawning-menu.yml",
+            "gui/leveling-menu.yml",
             "gui/mob-member-list.yml",
             "gui/mob-member-editor.yml",
             "gui/mob-drop-group-list.yml",
@@ -56,7 +57,10 @@ public final class ResourceInstaller {
             "spawning/biomes.yml",
             "spawning/groups/example.yml",
             "spawning/points/example.yml",
-            "bosses/example.yml");
+            "bosses/example.yml",
+            "leveling/groups/example.yml",
+            "leveling/points/example.yml",
+            "leveling/regions/example.yml");
 
     private ResourceInstaller() {
     }
@@ -72,6 +76,7 @@ public final class ResourceInstaller {
             mergeMissingKeys(plugin, path);
         }
         migrateCategoryLayout(plugin);
+        migrateLevelingMenu(plugin);
         migrateItemRewardEditorTemplate(plugin);
         migrateBossTimeWindowListTemplate(plugin);
         migrateSemanticMaterialTemplates(plugin);
@@ -112,6 +117,18 @@ public final class ResourceInstaller {
             }
         } catch (IOException | InvalidConfigurationException exception) {
             plugin.getLogger().log(Level.WARNING, "无法迁移默认分类菜单布局", exception);
+        }
+    }
+
+    private static void migrateLevelingMenu(JavaPlugin plugin) {
+        File file = new File(plugin.getDataFolder(), "gui/main.yml");
+        try {
+            YamlConfiguration current = YamlFiles.load(file);
+            if (GuiLayoutMigration.migrateLevelingMenu(current)) {
+                YamlFiles.saveAtomically(current, file);
+            }
+        } catch (IOException | InvalidConfigurationException exception) {
+            plugin.getLogger().log(Level.WARNING, "无法添加距离等级菜单入口，可使用 /mt levels 打开", exception);
         }
     }
 

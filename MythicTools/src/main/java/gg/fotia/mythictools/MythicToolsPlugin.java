@@ -14,7 +14,6 @@ import gg.fotia.mythictools.config.ConfigFileSnapshot;
 import gg.fotia.mythictools.gui.AdminGuiManager;
 import gg.fotia.mythictools.gui.GuiHolder;
 import gg.fotia.mythictools.lang.LocaleService;
-import gg.fotia.mythictools.lang.PacketLocaleListener;
 import gg.fotia.mythictools.papi.MythicToolsExpansion;
 import gg.fotia.mythictools.runtime.BukkitTaskScheduler;
 import gg.fotia.mythictools.runtime.OwnedTasks;
@@ -46,7 +45,6 @@ public final class MythicToolsPlugin extends JavaPlugin {
     private FirstDefeatDispatcher firstDefeatDispatcher;
     private OwnedTasks infrastructureTasks;
     private File databaseFile;
-    private PacketLocaleListener packetLocaleListener;
     private MythicToolsExpansion expansion;
     private ConfigIoService configurationIo;
 
@@ -196,6 +194,10 @@ public final class MythicToolsPlugin extends JavaPlugin {
         return runtime().bossRepository();
     }
 
+    public gg.fotia.mythictools.leveling.LevelingRepository levelingRepository() {
+        return runtime().levelingRepository();
+    }
+
     public SpawningManager spawningManager() {
         return runtime().spawningManager();
     }
@@ -252,11 +254,6 @@ public final class MythicToolsPlugin extends JavaPlugin {
     }
 
     private void registerStableBridges() {
-        packetLocaleListener = new PacketLocaleListener(() -> {
-            PluginRuntime current = runtimes.currentOrNull();
-            return current == null ? null : current.locales();
-        });
-        packetLocaleListener.register();
 
         expansion = new MythicToolsExpansion(this);
         if (!expansion.register()) {
@@ -283,14 +280,6 @@ public final class MythicToolsPlugin extends JavaPlugin {
                 getLogger().log(Level.WARNING, "注销 PlaceholderAPI 扩展失败", exception);
             }
             expansion = null;
-        }
-        if (packetLocaleListener != null) {
-            try {
-                packetLocaleListener.unregister();
-            } catch (RuntimeException exception) {
-                getLogger().log(Level.WARNING, "注销 PacketEvents 语言监听器失败", exception);
-            }
-            packetLocaleListener = null;
         }
         if (firstDefeatDispatcher != null) {
             firstDefeatDispatcher.close();

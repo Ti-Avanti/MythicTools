@@ -3,7 +3,7 @@ Layout:
   - '#########'
   - '#d##s##b#'
   - '#########'
-  - '#r#####c#'
+  - '#r##l##c#'
 items:
   d:
     material: CHEST
@@ -20,6 +20,10 @@ items:
   r:
     material: SUNFLOWER
     display-name-key: gui.main.reload-name
+  l:
+    material: EXPERIENCE_BOTTLE
+    display-name-key: gui.main.leveling-name
+    lore-keys: [gui.main.leveling-lore]
   c:
     material: BARRIER
     display-name-key: gui.main.close-name

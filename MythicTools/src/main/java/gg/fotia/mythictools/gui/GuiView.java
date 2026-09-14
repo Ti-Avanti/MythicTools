@@ -5,6 +5,7 @@ public enum GuiView {
     MAIN,
     DROPS_MENU,
     SPAWNING_MENU,
+    LEVELING_MENU,
     LIST,
     CATEGORY,
     EDITOR,

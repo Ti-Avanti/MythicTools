@@ -31,7 +31,8 @@ public final class MythicToolsCommand implements TabExecutor {
             @NotNull String[] args) {
         String subCommand = args.length == 0 ? "info" : args[0].toLowerCase(Locale.ROOT);
         return switch (subCommand) {
-            case "gui" -> openGui(sender);
+            case "gui" -> openGui(sender, false);
+            case "levels" -> openGui(sender, true);
             case "reload" -> reload(sender);
             case "info" -> info(sender);
             case "boss" -> boss(sender, args);
@@ -47,7 +48,7 @@ public final class MythicToolsCommand implements TabExecutor {
             @NotNull String alias,
             @NotNull String[] args) {
         if (args.length == 1) {
-            return filter(List.of("gui", "reload", "info", "boss", "spawnpoint"), args[0]);
+            return filter(List.of("gui", "levels", "reload", "info", "boss", "spawnpoint"), args[0]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("boss")) {
             return filter(List.of("spawn"), args[1]);
@@ -66,7 +67,7 @@ public final class MythicToolsCommand implements TabExecutor {
         return List.of();
     }
 
-    private boolean openGui(CommandSender sender) {
+    private boolean openGui(CommandSender sender, boolean leveling) {
         if (!(sender instanceof Player player)) {
             return playerOnly(sender);
         }
@@ -74,7 +75,11 @@ public final class MythicToolsCommand implements TabExecutor {
             plugin.messages().send(player, "common.no-permission", Map.of());
             return true;
         }
-        plugin.adminGui().openMain(player);
+        if (leveling) {
+            plugin.adminGui().openLevelingMenu(player);
+        } else {
+            plugin.adminGui().openMain(player);
+        }
         return true;
     }
 

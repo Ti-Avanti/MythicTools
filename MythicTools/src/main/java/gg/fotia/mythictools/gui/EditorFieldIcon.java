@@ -27,8 +27,13 @@ final class EditorFieldIcon {
             case "executor" -> Material.REPEATER;
             case "delivery" -> Material.CHEST_MINECART;
             case "enabled" -> Boolean.TRUE.equals(value) ? Material.LIME_DYE : Material.GRAY_DYE;
-            case "mob", "mob-id" -> Material.ZOMBIE_HEAD;
-            case "mob-group" -> Material.BUNDLE;
+            case "mob", "mob-id", "mob-ids" -> Material.ZOMBIE_HEAD;
+            case "mob-group", "mob-groups" -> Material.BUNDLE;
+            case "point-ids" -> Material.LODESTONE;
+            case "region-id", "region-ids" -> Material.MAP;
+            case "priority", "level-mode" -> Material.REPEATER;
+            case "safe-distance", "distance-per-level" -> Material.COMPASS;
+            case "base-level", "level-increase", "max-level" -> Material.EXPERIENCE_BOTTLE;
             case "world", "worlds" -> Material.GRASS_BLOCK;
             case "biomes" -> Material.OAK_SAPLING;
             case "chance" -> Material.ENDER_EYE;

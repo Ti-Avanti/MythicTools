@@ -4,5 +4,6 @@ package gg.fotia.mythictools.config;
 public enum ConfigDomain {
     REWARDS,
     SPAWNING,
-    BOSSES
+    BOSSES,
+    LEVELING
 }

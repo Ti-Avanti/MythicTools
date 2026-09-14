@@ -5,7 +5,7 @@
 Language:
   # 客户端语言没有对应文件时使用的语言
   Default: zh_CN
-  Follow-Client: true
+  # 玩家语言交给 FotiaTranslator；未安装时使用 Default。
   Locale-Aliases:
     zh_cn: zh_CN
     zh_tw: zh_CN
@@ -67,6 +67,10 @@ Performance:
 
 Database:
   File: data.db
+
+Leveling:
+  # WorldGuard 区域轮廓缓存（毫秒）；区域修改会在缓存过期后自动用于新生成的怪物
+  Region-Cache-Millis: 1000
 
 # 输出调试日志（重载耗时与配置诊断数量）
 Debug: false

@@ -38,6 +38,7 @@ final class GuiContext {
     boolean closed;
 
     CoreGuiController core;
+    final LevelingGuiController leveling;
     EditorSelectorController selector;
     RewardGuiController rewards;
     MobMemberGuiController mobMembers;
@@ -84,6 +85,7 @@ final class GuiContext {
         this.values = new EditorValueFormats(messages);
         this.screens = new GuiScreenSupport(templates, messages, values);
         this.sessionService = new EditorSessionService(this);
+        this.leveling = new LevelingGuiController(this);
     }
 
     /** 构造完成后由 AdminGuiManager 绑定全部控制器。 */

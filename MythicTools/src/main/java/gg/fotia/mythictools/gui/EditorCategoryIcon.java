@@ -23,6 +23,10 @@ final class EditorCategoryIcon {
             case "drop-command-rewards" -> Material.COMMAND_BLOCK;
             case "mob-group-amount" -> Material.DROPPER;
             case "mob-group-members" -> Material.SPAWNER;
+            case "level-basic" -> Material.REPEATER;
+            case "level-mobs" -> Material.ZOMBIE_HEAD;
+            case "level-origins" -> Material.COMPASS;
+            case "level-curve" -> Material.EXPERIENCE_BOTTLE;
             case "boss-basic" -> Material.NETHER_STAR;
             case "boss-loot" -> Material.CHEST;
             case "boss-biome-spawning" -> Material.GRASS_BLOCK;

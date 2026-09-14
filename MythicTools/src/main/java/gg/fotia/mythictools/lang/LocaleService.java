@@ -24,7 +24,6 @@ public final class LocaleService {
     private final Map<String, Map<String, String>> texts = new HashMap<>();
     private final Map<String, String> normalizedIds = new HashMap<>();
     private final Map<String, String> resolvedCache = new ConcurrentHashMap<>();
-    private final Map<UUID, String> clientLocales = new ConcurrentHashMap<>();
 
     public LocaleService(JavaPlugin plugin, PluginSettings settings) {
         this.plugin = plugin;
@@ -69,26 +68,14 @@ public final class LocaleService {
         return Map.copyOf(flat);
     }
 
-    /** 更新 PacketEvents 捕获到的客户端语言。 */
-    public void updateClientLocale(UUID playerId, String locale) {
-        clientLocales.put(playerId, locale == null ? "" : locale);
-    }
-
-    /** 玩家退出时释放语言缓存。 */
+    /** 玩家会话由 Translator 管理，退出时只释放本地文本解析缓存。 */
     public void remove(UUID playerId) {
-        clientLocales.remove(playerId);
+        resolvedCache.clear();
     }
 
     /** 返回玩家当前解析后的语言文件 ID。 */
     public String locale(Player player) {
-        if (!settings.followClientLocale() || player == null) {
-            return settings.defaultLocale();
-        }
-        String raw = clientLocales.get(player.getUniqueId());
-        if (raw == null || raw.isBlank()) {
-            raw = player.getLocale();
-        }
-        return resolveLocale(raw);
+        return gg.fotia.translator.bridge.PaperTranslatorBridge.locale(player, settings.defaultLocale());
     }
 
     /** 按玩家语言读取字符串。 */
@@ -98,6 +85,9 @@ public final class LocaleService {
 
     /** 按指定语言读取字符串，缺失时回退到默认语言。 */
     public String text(String locale, String key) {
+        var translated = gg.fotia.translator.bridge.PaperTranslatorBridge.find("mythictools", locale, key);
+        if (translated.isPresent() && !(translated.get() instanceof java.util.List<?>)) return String.valueOf(translated.get());
+
         Map<String, String> selected = texts.getOrDefault(locale, texts.get(settings.defaultLocale()));
         String value = selected.get(key);
         if (value != null) {

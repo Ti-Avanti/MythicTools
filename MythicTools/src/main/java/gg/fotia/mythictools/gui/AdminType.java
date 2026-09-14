@@ -9,7 +9,10 @@ public enum AdminType {
     BIOME_RULE("biome-rule", ConfigDomain.SPAWNING),
     SPAWN_POINT("spawn-point", ConfigDomain.SPAWNING),
     MOB_GROUP("mob-group", ConfigDomain.SPAWNING),
-    BOSS("boss", ConfigDomain.BOSSES);
+    BOSS("boss", ConfigDomain.BOSSES),
+    LEVEL_GROUP("level-group", ConfigDomain.LEVELING),
+    LEVEL_POINT("level-point", ConfigDomain.LEVELING),
+    LEVEL_REGION("level-region", ConfigDomain.LEVELING);
 
     private final String languageKey;
     private final ConfigDomain domain;

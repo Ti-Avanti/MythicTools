@@ -49,6 +49,9 @@ gui:
     spawn-point: "Fixed Spawn Point"
     mob-group: "Mob Group"
     boss: "Boss"
+    level-group: "Level Rule Group"
+    level-point: "Level Origin Point"
+    level-region: "Level Region Reference"
   main:
     title: "<!i><gold>MythicTools Administration"
     drops-name: "<!i><aqua>Drop Management"
@@ -57,6 +60,8 @@ gui:
     spawning-lore: "<!i><gray>Manage biome rules, fixed spawn points and mob groups"
     bosses-name: "<!i><red>Boss Management"
     bosses-lore: "<!i><gray>Manage phases, spawning and rewards"
+    leveling-name: "<!i><light_purple>Distance Levels"
+    leveling-lore: "<!i><gray>Increase mob levels farther from points or regions"
     reload-name: "<!i><yellow>Reload Configuration"
     close-name: "<!i><red>Close"
   drops-menu:
@@ -139,6 +144,18 @@ gui:
     mob-group-members:
       name: "Mob Members"
       lore: "Manage MythicMobs, weights and live probabilities"
+    level-basic:
+      name: "Enabled and Priority"
+      lore: "Priority breaks equal-distance ties; configure before enabling"
+    level-mobs:
+      name: "Affected Mobs"
+      lore: "Select MM mobs and existing mob groups; both sets apply"
+    level-origins:
+      name: "Distance Origins"
+      lore: "Select points and region references; nearest in the same world wins"
+    level-curve:
+      name: "Level Formula"
+      lore: "Replace or add, starting level, safe distance, step, increase and cap"
   spawning-menu:
     title: "<!i><gold>Spawning Management"
     biome-name: "<!i><green>Biome Spawn Rules"
@@ -148,6 +165,16 @@ gui:
     group-name: "<!i><light_purple>Mob Groups"
     group-lore: "<!i><gray>Reusable weighted random mob combinations"
     back-name: "<!i><gray>Back to Main Menu"
+  leveling-menu:
+    title: "<!i><gold>Distance Level Management"
+    groups-name: "<!i><light_purple>Level Rule Groups"
+    groups-lore: "<!i><gray>Select MM mobs, mob groups, origins and level settings\n<!i><gray>Configure and save before enabling a rule"
+    points-name: "<!i><aqua>Origin Points"
+    points-lore: "<!i><gray>Manage reusable distance origins\n<!i><gray>New points use your current world and coordinates"
+    regions-name: "<!i><green>WorldGuard Region References"
+    regions-lore: "<!i><gray>Select a world and an existing region\n<!i><gray>Zero distance inside; nearest boundary outside"
+    back-name: "<!i><gray>Back to Main Menu"
+    in-use: "<!i><red>Remove the bindings from these level groups first: {references}"
   mob-drop-group-list:
     title: "<!i><gold>Drop Group Assignments: <white>{id} <gray>Page {page}"
     entry-name: "<!i><aqua>{id}"
@@ -432,6 +459,18 @@ gui:
       number: "a number is required"
       map-list: "use key=value,key=value;key=value format"
     field-labels:
+      mob-ids: "MM Mobs (Multiple)"
+      mob-groups: "Mob Groups (Multiple)"
+      point-ids: "Origin Points (Multiple)"
+      region-ids: "Region References (Multiple)"
+      region-id: "WorldGuard Region"
+      priority: "Tie Priority (Higher Wins)"
+      level-mode: "Level Calculation Mode"
+      base-level: "Starting Level in Replace Mode"
+      safe-distance: "Safe Distance (Blocks)"
+      distance-per-level: "Distance per Increase (Blocks)"
+      level-increase: "Levels per Increase"
+      max-level: "Maximum Level"
       mob-group: "Mob Group"
       phase-mode: "Phase Mode"
       mythic-native__mob: "Native Root MythicMob"
@@ -534,6 +573,9 @@ gui:
     title: "<!i><gold>Select {field} <gray>Page {page}"
     option-name: "<!i><aqua>{option}"
     options:
+      level-mode:
+        replace: "Replace the original MM level (replace)"
+        add: "Add to the original MM level (add)"
       phase-mode:
         death-respawn: "Death Respawn (death-respawn)"
         mythic-native: "MythicMobs Native Phase (mythic-native)"

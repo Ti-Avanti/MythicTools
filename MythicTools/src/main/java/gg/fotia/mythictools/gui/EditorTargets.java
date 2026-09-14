@@ -48,6 +48,9 @@ final class EditorTargets {
             case SPAWN_POINT -> new Target(new File(plugin.getDataFolder(), "spawning/points/" + id + ".yml"), "");
             case MOB_GROUP -> new Target(new File(plugin.getDataFolder(), "spawning/groups/" + id + ".yml"), "");
             case BOSS -> new Target(new File(plugin.getDataFolder(), "bosses/" + id + ".yml"), "");
+            case LEVEL_GROUP -> new Target(new File(plugin.getDataFolder(), "leveling/groups/" + id + ".yml"), "");
+            case LEVEL_POINT -> new Target(new File(plugin.getDataFolder(), "leveling/points/" + id + ".yml"), "");
+            case LEVEL_REGION -> new Target(new File(plugin.getDataFolder(), "leveling/regions/" + id + ".yml"), "");
         };
     }
 
@@ -61,7 +64,9 @@ final class EditorTargets {
         if (!target.rootPath().isEmpty() && yaml.getConfigurationSection(target.rootPath()) == null) {
             throw new IllegalArgumentException("配置节点不存在: " + target.rootPath());
         }
-        return new EditorSession(type, id, target.file(), target.rootPath(), yaml);
+        EditorSession session = new EditorSession(type, id, target.file(), target.rootPath(), yaml);
+        LevelEditorDefaults.fillMissing(yaml, type);
+        return session;
     }
 
     List<String> ids(AdminType type) {
@@ -81,6 +86,9 @@ final class EditorTargets {
             case SPAWN_POINT -> new File(plugin.getDataFolder(), "spawning/points");
             case MOB_GROUP -> new File(plugin.getDataFolder(), "spawning/groups");
             case BOSS -> new File(plugin.getDataFolder(), "bosses");
+            case LEVEL_GROUP -> new File(plugin.getDataFolder(), "leveling/groups");
+            case LEVEL_POINT -> new File(plugin.getDataFolder(), "leveling/points");
+            case LEVEL_REGION -> new File(plugin.getDataFolder(), "leveling/regions");
             case BIOME_RULE -> throw new IllegalStateException();
         };
         File[] files = YamlFiles.list(directory);
@@ -148,6 +156,7 @@ final class EditorTargets {
                     yaml.set("members.default.weight", 100);
                 }
                 case BOSS -> createBoss(yaml, location);
+                case LEVEL_GROUP, LEVEL_POINT, LEVEL_REGION -> LevelEditorDefaults.apply(yaml, type, location);
                 case BIOME_RULE -> throw new IllegalStateException();
             }
         }
@@ -267,9 +276,25 @@ final class EditorTargets {
                     }
                 }
             }
+            references.addAll(levelReferences("mob-groups", groupId));
             return List.copyOf(references);
         } catch (InvalidConfigurationException exception) {
             throw new IOException("检查怪物组引用时发现配置格式错误", exception);
         }
+    }
+
+    List<String> levelReferences(String field, String id) throws IOException {
+        List<String> references = new ArrayList<>();
+        try {
+            for (String groupId : ids(AdminType.LEVEL_GROUP)) {
+                YamlConfiguration yaml = YamlFiles.load(target(AdminType.LEVEL_GROUP, groupId).file());
+                if (yaml.getStringList(field).contains(id)) {
+                    references.add("leveling:" + groupId);
+                }
+            }
+        } catch (InvalidConfigurationException exception) {
+            throw new IOException("检查等级规则引用时发现配置格式错误", exception);
+        }
+        return List.copyOf(references);
     }
 }

@@ -68,6 +68,18 @@ final class GuiLayoutMigration {
         return true;
     }
 
+    static boolean migrateLevelingMenu(YamlConfiguration yaml) {
+        if (!List.of("#########", "#d##s##b#", "#########", "#r#####c#")
+                .equals(yaml.getStringList("Layout")) || yaml.contains("items.l")) {
+            return false;
+        }
+        yaml.set("Layout", List.of("#########", "#d##s##b#", "#########", "#r##l##c#"));
+        yaml.set("items.l.material", "EXPERIENCE_BOTTLE");
+        yaml.set("items.l.display-name-key", "gui.main.leveling-name");
+        yaml.set("items.l.lore-keys", List.of("gui.main.leveling-lore"));
+        return true;
+    }
+
     static boolean migrateItemRewardEditorTemplate(YamlConfiguration yaml) {
         if (!ITEM_REWARD_EDITOR_LAYOUT.equals(yaml.getStringList("Layout"))
                 || !"NAME_TAG".equalsIgnoreCase(yaml.getString("items.f.material"))
