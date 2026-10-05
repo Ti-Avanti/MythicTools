@@ -12,9 +12,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
-        <paper.version>1.21.11-R0.1-SNAPSHOT</paper.version>
+        <paper.version>1.20.1-R0.1-SNAPSHOT</paper.version>
         <mythicmobs.version>5.12.1</mythicmobs.version>
-        <placeholderapi.version>2.12.2</placeholderapi.version>
+        <placeholderapi.version>2.12.3</placeholderapi.version>
         <junit.version>5.11.4</junit.version>
         <sqlite.version>3.46.1.0</sqlite.version>
         <slf4j.version>2.0.16</slf4j.version>
@@ -57,7 +57,7 @@
         <dependency>
             <groupId>gg.fotia</groupId>
             <artifactId>mythictools</artifactId>
-            <version>1.0.5</version>
+            <version>1.0.6</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

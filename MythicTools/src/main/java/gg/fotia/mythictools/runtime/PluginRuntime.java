@@ -41,6 +41,7 @@ import gg.fotia.mythictools.storage.PendingRewardQueue;
 import gg.fotia.mythictools.storage.FirstDefeatRepository;
 import gg.fotia.mythictools.text.MessageRenderer;
 import gg.fotia.mythictools.version.ServerVersion;
+import gg.fotia.mythictools.version.MythicMobsVersion;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -115,7 +116,9 @@ public final class PluginRuntime implements ManagedRuntime {
         this.dropListener = dropListener;
         this.rewardService = rewardService;
         this.levelingRepository = levelingRepository;
-        this.distanceLevels = new DistanceLevelListener(levelingRepository);
+        String mythicVersion = Bukkit.getPluginManager().getPlugin("MythicMobs").getDescription().getVersion();
+        this.distanceLevels = new DistanceLevelListener(
+                levelingRepository, MythicMobsVersion.usesLegacySpawnLevelEvent(mythicVersion));
         this.runtimeTasks = runtimeTasks;
     }
 
@@ -131,7 +134,7 @@ public final class PluginRuntime implements ManagedRuntime {
         ServerVersion serverVersion = ServerVersion.detect();
         if (!serverVersion.isSupported()) {
             throw new IllegalStateException("不支持的服务端版本: " + Bukkit.getBukkitVersion()
-                    + "，支持 1.20.1、1.20.4、全部 1.21.x、26.1.2+ 与全部 26.2.x");
+                    + "，支持 1.20.1、1.20.4、全部 1.21.x、26.1.2+、全部 26.2.x 与 26.3.x");
         }
 
         LocaleService locales = new LocaleService(plugin, settings);

@@ -4,7 +4,7 @@
 
     <groupId>gg.fotia</groupId>
     <artifactId>mythictools</artifactId>
-    <version>1.0.5</version>
+    <version>1.0.6</version>
     <name>MythicTools</name>
     <description>MythicMobs 掉落、刷怪与 Boss 管理工具</description>
 
@@ -14,8 +14,7 @@
         <paper.version>1.20.1-R0.1-SNAPSHOT</paper.version>
         <modern.spigot.version>1.21.4-R0.1-SNAPSHOT</modern.spigot.version>
         <adventure.version>4.14.0</adventure.version>
-        <placeholderapi.version>2.12.2</placeholderapi.version>
-        <packetevents.version>2.13.0</packetevents.version>
+        <placeholderapi.version>2.12.3</placeholderapi.version>
         <craftengine.version>26.7.2</craftengine.version>
         <sqlite.version>3.46.1.0</sqlite.version>
         <worldguard.version>7.0.12</worldguard.version>
@@ -105,12 +104,6 @@
             <groupId>net.kyori</groupId>
             <artifactId>adventure-text-serializer-plain</artifactId>
             <version>${adventure.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.retrooper</groupId>
-            <artifactId>packetevents-spigot</artifactId>
-            <version>${packetevents.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

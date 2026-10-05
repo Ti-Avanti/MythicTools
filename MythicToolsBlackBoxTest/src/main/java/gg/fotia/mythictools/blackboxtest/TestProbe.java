@@ -1,6 +1,8 @@
 package gg.fotia.mythictools.blackboxtest;
 
 import gg.fotia.mythictools.MythicToolsPlugin;
+import gg.fotia.mythictools.integration.MythicMobsAdapter;
+import gg.fotia.mythictools.item.ItemFactory;
 import io.lumine.mythic.bukkit.MythicBukkit;
 import io.lumine.mythic.core.mobs.ActiveMob;
 import java.io.ByteArrayInputStream;
@@ -44,6 +46,7 @@ import org.bukkit.util.io.BukkitObjectOutputStream;
 final class TestProbe extends TestActions {
     private final MythicToolsBlackBoxTestPlugin plugin;
     private final MythicToolsPlugin target;
+    private final MythicMobsAdapter mythicMobs = new MythicMobsAdapter();
     private final FixtureManager fixtures;
     private final TestMessages messages;
     private final Map<String, Integer> markers;
@@ -277,11 +280,12 @@ final class TestProbe extends TestActions {
     }
 
     void visualMetadata(Player player) {
-        ItemStack item = new ItemStack(Material.DIAMOND);
-        ItemMeta meta = item.getItemMeta();
-        meta.setItemModel(new NamespacedKey("mythictools", "probe_item_model"));
-        meta.setTooltipStyle(new NamespacedKey("mythictools", "probe_tooltip_style"));
-        item.setItemMeta(meta);
+        YamlConfiguration config = new YamlConfiguration();
+        config.set("material", "DIAMOND");
+        config.set("item-model", "mythictools:probe_item_model");
+        config.set("tooltip-style", "mythictools:probe_tooltip_style");
+        ItemStack item = new ItemFactory(target.messages(), target.serverVersion(), plugin.getLogger())
+                .create(config, player, Map.of());
         player.getInventory().setItem(8, item);
         output(player, "VISUAL", Map.of(
                 "itemModelAndTooltipStyle", target.serverVersion().supportsItemModelAndTooltipStyle(),
@@ -329,7 +333,7 @@ final class TestProbe extends TestActions {
                 if (entity instanceof Item item) {
                     dropped.merge(item.getItemStack().getType().name(), item.getItemStack().getAmount(), Integer::sum);
                 }
-                MythicBukkit.inst().getMobManager().getMythicType(entity)
+                mythicMobs.mobId(entity)
                         .filter(id -> id.startsWith("MTQA_"))
                         .ifPresent(id -> mobs.merge(id, 1, Integer::sum));
         }
@@ -410,7 +414,7 @@ final class TestProbe extends TestActions {
             output(player, "REMOVE", Map.of("success", false, "target", targetName));
             return;
         }
-        String mythicId = MythicBukkit.inst().getMobManager().getMythicType(entity).orElse("unknown");
+        String mythicId = mythicMobs.mobId(entity).orElse("unknown");
         UUID entityId = entity.getUniqueId();
         entity.remove();
         output(player, "REMOVE", Map.of(
@@ -606,13 +610,13 @@ final class TestProbe extends TestActions {
         }
         UUID exactId = requestedId;
         return player.getWorld().getEntities().stream()
-                .filter(entity -> MythicBukkit.inst().getMobManager().getMythicType(entity)
+                .filter(entity -> mythicMobs.mobId(entity)
                         .map(id -> id.startsWith("MTQA_")).orElse(false))
                 .filter(entity -> {
                     if (exactId != null) {
                         return entity.getUniqueId().equals(exactId);
                     }
-                    String mythicId = MythicBukkit.inst().getMobManager().getMythicType(entity).orElse("");
+                    String mythicId = mythicMobs.mobId(entity).orElse("");
                     if (requested.equals("boss")) {
                         return isBossTestMob(mythicId);
                     }
@@ -698,7 +702,7 @@ final class TestProbe extends TestActions {
     private void removeTestEntities(Player player) {
         List<Entity> entities = Bukkit.getWorlds().stream().flatMap(world -> world.getEntities().stream()).toList();
         for (Entity entity : entities) {
-            MythicBukkit.inst().getMobManager().getMythicType(entity)
+            mythicMobs.mobId(entity)
                     .filter(id -> id.startsWith("MTQA_"))
                     .ifPresent(ignored -> {
                         Optional<ActiveMob> activeMob =
@@ -728,7 +732,7 @@ final class TestProbe extends TestActions {
         return player.getWorld().getEntities().stream()
                 .filter(LivingEntity.class::isInstance)
                 .map(LivingEntity.class::cast)
-                .filter(entity -> MythicBukkit.inst().getMobManager().getMythicType(entity)
+                .filter(entity -> mythicMobs.mobId(entity)
                         .map(id -> id.startsWith("MTQA_")
                                 && (mobId == null || id.equalsIgnoreCase(mobId))).orElse(false))
                 .min(Comparator.comparingDouble(entity -> entity.getLocation().distanceSquared(player.getLocation())))

@@ -29,7 +29,7 @@ public final class ServerVersion {
     /**
      * 解析 Bukkit 版本字符串并判定是否处于本插件的兼容范围。
      *
-     * 支持 1.20.1、1.20.4、所有 1.21.x、26.1.2 及以上补丁和所有 26.2.x。
+     * 支持 1.20.1、1.20.4、所有 1.21.x、26.1.2 及以上补丁、所有 26.2.x 和 26.3.x。
      */
     public static ServerVersion fromBukkitVersion(String bukkitVersion) {
         if (bukkitVersion == null) {
@@ -52,7 +52,7 @@ public final class ServerVersion {
     private static boolean isSupportedRange(int major, int minor, int patch) {
         return (major == 1 && minor == 20 && (patch == 1 || patch == 4))
                 || (major == 1 && minor == 21)
-                || (major == 26 && ((minor == 1 && patch >= 2) || minor == 2));
+                || (major == 26 && ((minor == 1 && patch >= 2) || minor == 2 || minor == 3));
     }
 
     public boolean isSupported() {

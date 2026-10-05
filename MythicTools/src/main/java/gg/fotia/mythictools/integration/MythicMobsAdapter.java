@@ -1,6 +1,7 @@
 package gg.fotia.mythictools.integration;
 
 import io.lumine.mythic.bukkit.MythicBukkit;
+import io.lumine.mythic.core.constants.MobKeys;
 import io.lumine.mythic.core.mobs.ActiveMob;
 import java.util.Optional;
 import java.util.List;
@@ -8,8 +9,9 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
+import org.bukkit.persistence.PersistentDataType;
 
-/** MythicMobs 5.12.1 的集中集成模块。 */
+/** MythicMobs 5.x 的集中集成模块。 */
 public final class MythicMobsAdapter implements MythicMobGateway {
     /** 生成指定 MythicMob，ID 无效时返回空。 */
     public Optional<ActiveMob> spawn(String mobId, Location location, double level) {
@@ -21,7 +23,8 @@ public final class MythicMobsAdapter implements MythicMobGateway {
 
     /** 获取 Bukkit 实体对应的 MythicMob ID。 */
     public Optional<String> mobId(Entity entity) {
-        return MythicBukkit.inst().getMobManager().getMythicType(entity);
+        // 使用新旧 MM 共有的持久标记，死亡注销后仍能识别，避免依赖新版 getMythicType。
+        return Optional.ofNullable(entity.getPersistentDataContainer().get(MobKeys.TYPE, PersistentDataType.STRING));
     }
 
     /** 获取活动 MythicMob。 */

@@ -8,7 +8,6 @@ description: MythicMobs 掉落、刷怪与 Boss 管理工具
 depend:
   - MythicMobs
   - PlaceholderAPI
-  - packetevents
 softdepend:
   - WorldGuard
   - FotiaTranslator
