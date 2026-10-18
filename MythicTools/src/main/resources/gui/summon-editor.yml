@@ -1,0 +1,44 @@
+# e 为分页内容区，最后一行为返回、翻页、新建、预览、样品、保存、删除和搜索。
+title-key: "summon.gui.title"
+Layout: ["#########", "eeeeeeeee", "eeeeeeeee", "eeeeeeeee", "eeeeeeeee", "bpcvgsnxf"]
+items:
+  e:
+    material: "PAPER"
+    display-name: "<!i><gold>{name}"
+    lore: ["<!i><gray>{value}", "<!i><dark_gray>{hint}"]
+  b:
+    material: "ARROW"
+    display-name: "<!i><gold>{name}"
+    lore: ["<!i><gray>{value}", "<!i><dark_gray>{hint}"]
+  p:
+    material: "ARROW"
+    display-name: "<!i><gold>{name}"
+    lore: ["<!i><gray>{value}", "<!i><dark_gray>{hint}"]
+  c:
+    material: "ANVIL"
+    display-name: "<!i><gold>{name}"
+    lore: ["<!i><gray>{value}", "<!i><dark_gray>{hint}"]
+  v:
+    material: "ENDER_EYE"
+    display-name: "<!i><gold>{name}"
+    lore: ["<!i><gray>{value}", "<!i><dark_gray>{hint}"]
+  g:
+    material: "NETHER_STAR"
+    display-name: "<!i><gold>{name}"
+    lore: ["<!i><gray>{value}", "<!i><dark_gray>{hint}"]
+  s:
+    material: "EMERALD"
+    display-name: "<!i><gold>{name}"
+    lore: ["<!i><gray>{value}", "<!i><dark_gray>{hint}"]
+  n:
+    material: "ARROW"
+    display-name: "<!i><gold>{name}"
+    lore: ["<!i><gray>{value}", "<!i><dark_gray>{hint}"]
+  x:
+    material: "BARRIER"
+    display-name: "<!i><gold>{name}"
+    lore: ["<!i><gray>{value}", "<!i><dark_gray>{hint}"]
+  f:
+    material: "COMPASS"
+    display-name: "<!i><gold>{name}"
+    lore: ["<!i><gray>{value}", "<!i><dark_gray>{hint}"]

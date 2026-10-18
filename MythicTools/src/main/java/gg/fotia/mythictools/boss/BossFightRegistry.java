@@ -11,11 +11,13 @@ import java.util.function.Predicate;
 
 /** 同步维护 Boss 实体、Boss ID 与生成器三套索引。 */
 final class BossFightRegistry {
+    private final Map<UUID, BossFight> byFight = new HashMap<>();
     private final Map<UUID, BossFight> byEntity = new HashMap<>();
     private final Map<String, Set<BossFight>> byBoss = new HashMap<>();
     private final Map<String, Set<BossFight>> bySpawner = new HashMap<>();
 
     void add(BossFight fight) {
+        byFight.put(fight.fightId, fight);
         bindEntity(fight);
         byBoss.computeIfAbsent(fight.config.id(), ignored -> new HashSet<>()).add(fight);
         bySpawner.computeIfAbsent(fight.spawnerKey, ignored -> new HashSet<>()).add(fight);
@@ -49,6 +51,10 @@ final class BossFightRegistry {
         return byBoss.values().stream().mapToInt(Set::size).sum();
     }
 
+    boolean containsFight(UUID id) {
+        return byFight.containsKey(id);
+    }
+
     Optional<BossFight> firstBoss(String bossId) {
         return byBoss.getOrDefault(bossId, Set.of()).stream().findFirst();
     }
@@ -58,6 +64,7 @@ final class BossFightRegistry {
     }
 
     void remove(BossFight fight) {
+        byFight.remove(fight.fightId);
         byEntity.remove(fight.entityId);
         removeFromSet(byBoss, fight.config.id(), fight);
         removeFromSet(bySpawner, fight.spawnerKey, fight);
@@ -75,6 +82,7 @@ final class BossFightRegistry {
     }
 
     void clear() {
+        byFight.clear();
         byEntity.clear();
         byBoss.clear();
         bySpawner.clear();

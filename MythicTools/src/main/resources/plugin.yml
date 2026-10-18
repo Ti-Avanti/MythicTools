@@ -9,6 +9,8 @@ depend:
   - MythicMobs
   - PlaceholderAPI
 softdepend:
+  - ModelEngine
+  - BetterModel
   - WorldGuard
   - FotiaTranslator
   - CraftEngine
@@ -23,7 +25,7 @@ libraries:
 commands:
   mythictools:
     description: MythicTools 主命令
-    usage: /<command> [gui|levels|reload|info|boss|spawnpoint]
+    usage: /<command> [gui|levels|reload|info|boss|spawnpoint|summon]
     aliases: [mt, mtools]
     permission: mythictools.command
 

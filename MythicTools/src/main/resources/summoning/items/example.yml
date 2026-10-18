@@ -1,0 +1,74 @@
+# 默认关闭；绑定有效 Boss 后在菜单中启用。
+# 展示来源：none / modelengine / bettermodel / craftengine，资源 ID 从对应插件选择。
+# duration-seconds 从 Boss 成功生成时计算；end-seconds 为消失动画额外时长。
+# 召唤物只识别插件内部标记，请用 /mt summon give 发放。
+enabled: false
+boss-id: "example"
+item:
+  material: "NETHER_STAR"
+  display-name: "<!i><gold>守卫召唤石"
+  lore: ["<!i><gray>手持右键开启召唤仪式"]
+  custom-model-data: 0
+consume-amount: 1
+cooldown-seconds: 60
+permission: ""
+worlds: []
+max-active: 1
+spawn:
+  mode: "player-location"
+  target-distance: 6
+windup:
+  seconds: 5.0
+  charge-start: 0.1
+  move-radius: 3.0
+  damage-interrupt: false
+  countdown: "actionbar"
+effects:
+  layer1:
+    preset: "arcane"
+visual:
+  type: "none"
+  id: ""
+  during-windup: true
+  duration-seconds: 30
+  scale: 1.0
+  offset:
+    x: 0.0
+    y: 0.1
+    z: 0.0
+  yaw: 0.0
+  remove-on-boss-end: false
+  rotation: 0
+  float-height: 0
+  animations:
+    start: ""
+    charge: ""
+    release: ""
+    idle: ""
+    end: ""
+  end-seconds: 0.5
+  release-seconds: 1.0
+sounds:
+  start:
+    sound: "minecraft:block.beacon.activate"
+    volume: 1.0
+    pitch: 1.0
+  charge:
+    sound: "minecraft:block.portal.ambient"
+    volume: 1.0
+    pitch: 1.0
+  success:
+    sound: "minecraft:entity.evoker.prepare_summon"
+    volume: 1.0
+    pitch: 1.0
+  cancel:
+    sound: "minecraft:block.beacon.deactivate"
+    volume: 1.0
+    pitch: 1.0
+
+# 留空则使用玩家语言对应的消息；可用 {id}、{boss}、{seconds}。
+messages:
+  start: ""
+  countdown: ""
+  success: ""
+  cancelled: ""

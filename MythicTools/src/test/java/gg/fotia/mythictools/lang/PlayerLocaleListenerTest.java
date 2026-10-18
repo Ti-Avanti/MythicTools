@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import gg.fotia.mythictools.storage.ClaimResult;
@@ -114,6 +116,51 @@ class PlayerLocaleListenerTest {
 
         assertEquals(2, queue.claims);
         assertEquals(0, mainThread.size());
+    }
+
+    @Test
+    void deathRefundWaitsUntilRespawnInventoryHasBeenRestored() {
+        ItemStack refund = new ItemStack(Material.NETHER_STAR);
+        ImmediateQueue queue = new ImmediateQueue(List.of(refund));
+        ManualExecutor mainThread = new ManualExecutor();
+        Player player = mock(Player.class);
+        PlayerInventory inventory = mock(PlayerInventory.class);
+        when(player.getUniqueId()).thenReturn(UUID.randomUUID());
+        when(player.isOnline()).thenReturn(true);
+        when(player.isDead()).thenReturn(true);
+        when(player.getInventory()).thenReturn(inventory);
+        when(inventory.addItem(any(ItemStack.class))).thenReturn(new HashMap<>());
+        PlayerLocaleListener listener = new PlayerLocaleListener(
+                null, queue, false, mainThread, (ignored, amount) -> { }, quietLogger());
+
+        listener.handleRespawn(player);
+        verifyNoInteractions(inventory);
+        assertEquals(1, mainThread.size());
+
+        when(player.isDead()).thenReturn(false);
+        mainThread.runNext();
+
+        verify(inventory).addItem(refund);
+        assertTrue(queue.leftovers.isEmpty());
+    }
+
+    @Test
+    void deathDuringPendingDeliveryKeepsRefundInQueue() {
+        ImmediateQueue queue = new ImmediateQueue(List.of(new ItemStack(Material.NETHER_STAR)));
+        Player player = mock(Player.class);
+        PlayerInventory inventory = mock(PlayerInventory.class);
+        when(player.getUniqueId()).thenReturn(UUID.randomUUID());
+        when(player.isOnline()).thenReturn(true);
+        when(player.isDead()).thenReturn(true);
+        when(player.getInventory()).thenReturn(inventory);
+        PlayerLocaleListener listener = new PlayerLocaleListener(
+                null, queue, false, Runnable::run, (ignored, amount) -> { }, quietLogger());
+
+        listener.handleJoin(player);
+
+        verifyNoInteractions(inventory);
+        assertEquals(1, queue.leftovers.size());
+        assertEquals(Material.NETHER_STAR, queue.leftovers.get(0).getType());
     }
 
     private static Logger quietLogger() {

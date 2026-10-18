@@ -215,19 +215,26 @@ public final class BossManager implements Listener {
 
     /** 在管理员位置立即生成指定 Boss。 */
     public boolean spawnNow(String bossId, Location location) {
+        return summon(bossId, location).isPresent();
+    }
+
+    public boolean isFightActive(UUID id) {
+        return fights.containsFight(id);
+    }
+
+    /** 返回本次实际生成的战斗，避免用全局存活数量推断召唤结果。 */
+    public Optional<BossSpawnResult> summon(String bossId, Location location) {
         if (!enabled) {
-            return false;
+            return Optional.empty();
         }
         BossConfig boss = repository.boss(bossId);
         if (boss == null) {
-            return false;
+            return Optional.empty();
         }
         BossSpawner manual = new BossSpawner("manual", BossSpawnType.POINT, true,
                 1L, 1.0, Integer.MAX_VALUE, 0, BossPointSchedule.fixedInterval(1L),
                 Set.of(), Set.of(), 0, 0, location);
-        int before = aliveCount(bossId);
-        spawnFight(boss, manual, location);
-        return aliveCount(bossId) > before;
+        return spawnFight(boss, manual, location);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -338,13 +345,18 @@ public final class BossManager implements Listener {
         }
     }
 
-    private void spawnFight(BossConfig boss, BossSpawner spawner, Location location) {
+    private Optional<BossSpawnResult> spawnFight(BossConfig boss, BossSpawner spawner, Location location) {
         BossPhase first = boss.initialPhase();
-        mythicMobs.spawn(first.mobId(), location, first.level()).ifPresent(activeMob -> {
+        return mythicMobs.spawn(first.mobId(), location, first.level()).map(activeMob -> {
             activeMob.getEntity().setSaveToDisk(false);
             BossFight fight = new BossFight(boss, key(boss, spawner), activeMob.getUniqueId());
             fights.add(fight);
-            broadcast(boss, boss.spawnBroadcast(), location, null);
+            try {
+                broadcast(boss, boss.spawnBroadcast(), location, null);
+            } catch (RuntimeException exception) {
+                plugin.getLogger().log(Level.WARNING, "Boss 已生成，但生成广播失败: " + boss.id(), exception);
+            }
+            return new BossSpawnResult(fight.fightId, fight.entityId);
         });
     }
 

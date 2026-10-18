@@ -10,6 +10,22 @@ import org.junit.jupiter.api.Test;
 
 class BossManagerLifecycleTest {
     @Test
+    void stableFightIdSurvivesEntityReplacementAndIsRemovedAtFightEnd() {
+        BossFightRegistry registry = new BossFightRegistry();
+        BossFight fight = new BossFight(bossConfig(), "summon", UUID.randomUUID());
+        UUID stable = fight.fightId;
+        registry.add(fight);
+        registry.detachEntity(fight.entityId);
+        org.junit.jupiter.api.Assertions.assertTrue(registry.containsFight(stable));
+        fight.entityId = UUID.randomUUID();
+        registry.bindEntity(fight);
+        org.junit.jupiter.api.Assertions.assertTrue(registry.containsFight(stable));
+        registry.remove(fight);
+        org.junit.jupiter.api.Assertions.assertFalse(registry.containsFight(stable));
+        assertEquals(0, registry.size());
+    }
+
+    @Test
     void sweepForExternallyRemovedBossCleansEveryIndexWithoutSettlement() {
         BossFightRegistry registry = new BossFightRegistry();
         UUID entityId = UUID.randomUUID();

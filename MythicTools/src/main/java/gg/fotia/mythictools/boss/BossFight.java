@@ -6,6 +6,7 @@ import java.util.UUID;
 
 /** 单场跨阶段 Boss 战斗的运行状态。 */
 final class BossFight {
+    final UUID fightId = UUID.randomUUID();
     final BossConfig config;
     final String spawnerKey;
     final Map<UUID, Double> damage = new HashMap<>();

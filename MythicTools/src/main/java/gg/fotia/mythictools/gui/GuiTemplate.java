@@ -17,6 +17,7 @@ import org.bukkit.inventory.ItemStack;
 public final class GuiTemplate {
     private static final Map<String, String> REQUIRED_SYMBOLS = Map.ofEntries(
             Map.entry("main", "dsbrc"),
+            Map.entry("summon-editor", "ebpcvgsnxf"),
             Map.entry("drops-menu", "gmr"),
             Map.entry("spawning-menu", "bpgr"),
             Map.entry("list", "epnbc"),

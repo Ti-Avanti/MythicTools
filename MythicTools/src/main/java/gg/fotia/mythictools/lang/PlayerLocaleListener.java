@@ -16,6 +16,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 
 /** 处理语言缓存清理与离线奖励领取。 */
@@ -68,6 +69,20 @@ public final class PlayerLocaleListener implements Listener {
         claimWithRetry(player, 1);
     }
 
+    @EventHandler
+    public void onRespawn(PlayerRespawnEvent event) {
+        handleRespawn(event.getPlayer());
+    }
+
+    void handleRespawn(Player player) {
+        // 等复活事件结束、背包恢复后，再领取死亡期间暂存的召唤物。
+        scheduleMainThread(() -> {
+            if (player.isOnline() && !player.isDead()) {
+                claimWithRetry(player, 1);
+            }
+        });
+    }
+
     private void claimWithRetry(Player player, int busyRetriesRemaining) {
         AtomicInteger deliveredAmount = new AtomicInteger(-1);
         ClaimResult claim = pendingRewards.claim(player.getUniqueId(), items -> {
@@ -75,7 +90,7 @@ public final class PlayerLocaleListener implements Listener {
                 return List.of();
             }
             List<ItemStack> attempted = copyItems(items);
-            if (!player.isOnline()) {
+            if (!player.isOnline() || player.isDead()) {
                 return List.copyOf(attempted);
             }
 

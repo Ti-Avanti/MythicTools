@@ -36,6 +36,7 @@ public final class MythicToolsCommand implements TabExecutor {
             case "reload" -> reload(sender);
             case "info" -> info(sender);
             case "boss" -> boss(sender, args);
+            case "summon" -> summon(sender, args);
             case "spawnpoint" -> spawnPoint(sender, args);
             default -> unknown(sender);
         };
@@ -48,7 +49,12 @@ public final class MythicToolsCommand implements TabExecutor {
             @NotNull String alias,
             @NotNull String[] args) {
         if (args.length == 1) {
-            return filter(List.of("gui", "levels", "reload", "info", "boss", "spawnpoint"), args[0]);
+            return filter(List.of("gui", "levels", "reload", "info", "boss", "spawnpoint", "summon"), args[0]);
+        }
+        if (args.length > 0 && args[0].equalsIgnoreCase("summon") && sender.hasPermission("mythictools.admin")) {
+            if (args.length == 2) return filter(List.of("gui", "give"), args[1]);
+            if (args.length == 3 && args[1].equalsIgnoreCase("give")) return filter(org.bukkit.Bukkit.getOnlinePlayers().stream().map(Player::getName).toList(), args[2]);
+            if (args.length == 4 && args[1].equalsIgnoreCase("give")) return filter(plugin.summoning().service().repository().ids(false), args[3]);
         }
         if (args.length == 2 && args[0].equalsIgnoreCase("boss")) {
             return filter(List.of("spawn"), args[1]);
@@ -160,6 +166,27 @@ public final class MythicToolsCommand implements TabExecutor {
     private boolean unknown(CommandSender sender) {
         send(sender, "common.unknown-command", Map.of());
         return true;
+    }
+
+    private boolean summon(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("mythictools.admin")) { send(sender, "common.no-permission", Map.of()); return true; }
+        if (args.length < 2 || args[1].equalsIgnoreCase("gui")) {
+            if (sender instanceof Player player) plugin.summoning().gui().open(player); else return playerOnly(sender);
+            return true;
+        }
+        if (args.length >= 4 && args[1].equalsIgnoreCase("give")) {
+            var player = org.bukkit.Bukkit.getPlayerExact(args[2]);
+            var definition = plugin.summoning().service().repository().get(args[3]);
+            if (player == null || definition == null) { send(sender, "common.not-found", Map.of("id", args[3])); return true; }
+            try {
+                int amount = args.length == 5 ? Integer.parseInt(args[4]) : 1;
+                if (amount < 1 || amount > 2304 || args.length > 5) throw new NumberFormatException();
+                plugin.summoning().service().give(player, definition, amount);
+                send(sender, "summon.given", Map.of("id", definition.id(), "amount", amount));
+            } catch (NumberFormatException error) { send(sender, "summon.usage", Map.of()); }
+            return true;
+        }
+        send(sender, "summon.usage", Map.of()); return true;
     }
 
     private boolean playerOnly(CommandSender sender) {

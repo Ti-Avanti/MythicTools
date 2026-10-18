@@ -103,6 +103,7 @@ public final class MythicToolsPlugin extends JavaPlugin {
         long started = System.currentTimeMillis();
         try {
             runtime().activity().requireIdle();
+            if (summoning().service().sessionCount() > 0) throw new IllegalStateException("召唤仪式或预览仍在运行，请稍后重载");
             YamlConfiguration configuration = loadMainConfiguration();
             PluginSettings candidateSettings = PluginSettings.load(configuration);
             File candidateDatabase = databaseFile(candidateSettings);
@@ -205,6 +206,8 @@ public final class MythicToolsPlugin extends JavaPlugin {
     public BossManager bossManager() {
         return runtime().bossManager();
     }
+
+    public gg.fotia.mythictools.summoning.SummoningModule summoning() { return runtime().summoning(); }
 
     public AdminGuiManager adminGui() {
         return runtime().adminGui();

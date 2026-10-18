@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 class EditorCategoryIconTest {
 
     @Test
-    void mapsEveryEditorCategoryToADistinctSemanticIcon() {
+    void mapsEveryEditorCategoryToASemanticIcon() {
         Map<EditorCategory, Material> expected = Map.ofEntries(
                 Map.entry(EditorCategory.BIOME_BASIC, Material.OAK_SAPLING),
                 Map.entry(EditorCategory.BIOME_TRIGGER, Material.REDSTONE_TORCH),
@@ -23,6 +23,10 @@ class EditorCategoryIconTest {
                 Map.entry(EditorCategory.DROP_COMMAND_REWARDS, Material.COMMAND_BLOCK),
                 Map.entry(EditorCategory.MOB_GROUP_AMOUNT, Material.DROPPER),
                 Map.entry(EditorCategory.MOB_GROUP_MEMBERS, Material.SPAWNER),
+                Map.entry(EditorCategory.LEVEL_BASIC, Material.REPEATER),
+                Map.entry(EditorCategory.LEVEL_MOBS, Material.ZOMBIE_HEAD),
+                Map.entry(EditorCategory.LEVEL_ORIGINS, Material.COMPASS),
+                Map.entry(EditorCategory.LEVEL_CURVE, Material.EXPERIENCE_BOTTLE),
                 Map.entry(EditorCategory.BOSS_BASIC, Material.NETHER_STAR),
                 Map.entry(EditorCategory.BOSS_LOOT, Material.CHEST),
                 Map.entry(EditorCategory.BOSS_BIOME_SPAWNING, Material.GRASS_BLOCK),
@@ -36,7 +40,8 @@ class EditorCategoryIconTest {
         assertEquals(EditorCategory.values().length, expected.size());
         expected.forEach((category, material) ->
                 assertEquals(material, EditorCategoryIcon.forKey(category.key()), category.key()));
-        assertEquals(expected.size(), new HashSet<>(expected.values()).size());
+        // 坐标和距离来源页面有意共用指南针，其余图标保持可区分。
+        assertEquals(expected.size() - 1, new HashSet<>(expected.values()).size());
     }
 
     @Test

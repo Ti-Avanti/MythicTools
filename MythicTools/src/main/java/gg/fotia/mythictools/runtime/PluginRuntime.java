@@ -75,6 +75,7 @@ public final class PluginRuntime implements ManagedRuntime {
     private final LevelingRepository levelingRepository;
     private final DistanceLevelListener distanceLevels;
     private final OwnedTasks runtimeTasks;
+    private final gg.fotia.mythictools.summoning.SummoningModule summoning;
     private final List<Listener> registeredListeners = new ArrayList<>();
     private final AtomicBoolean closed = new AtomicBoolean();
 
@@ -97,6 +98,7 @@ public final class PluginRuntime implements ManagedRuntime {
             DropListener dropListener,
             RewardService rewardService,
             LevelingRepository levelingRepository,
+            gg.fotia.mythictools.summoning.SummoningModule summoning,
             OwnedTasks runtimeTasks) {
         this.plugin = plugin;
         this.settings = settings;
@@ -120,6 +122,7 @@ public final class PluginRuntime implements ManagedRuntime {
         this.distanceLevels = new DistanceLevelListener(
                 levelingRepository, MythicMobsVersion.usesLegacySpawnLevelEvent(mythicVersion));
         this.runtimeTasks = runtimeTasks;
+        this.summoning = summoning;
     }
 
     /** 无外部注册副作用地准备候选；所有配置和语言错误在此阶段暴露。 */
@@ -203,6 +206,9 @@ public final class PluginRuntime implements ManagedRuntime {
                 locales::locale, settings.safetyLimits(),
                 new OwnedTasks(scheduler));
 
+        var summoning = new gg.fotia.mythictools.summoning.SummoningModule(
+                plugin, configuration, bossManager, bossRepository, pendingRewards, messages,
+                itemFactory, chatInput, guiTemplates);
         if (settings.debug()) {
             plugin.getLogger().info("[DEBUG] 运行时候选准备完成，耗时 "
                     + (System.currentTimeMillis() - started) + "ms");
@@ -211,7 +217,7 @@ public final class PluginRuntime implements ManagedRuntime {
                 plugin, settings, serverVersion, locales, messages, rewardRepository,
                 spawningRepository, bossRepository, reloadCoordinator, spawningManager, bossManager,
                 guiTemplates, chatInput, adminGui, playerLocaleListener, dropListener, rewardService,
-                levelingRepository, runtimeTasks);
+                levelingRepository, summoning, runtimeTasks);
     }
 
     @Override
@@ -231,6 +237,9 @@ public final class PluginRuntime implements ManagedRuntime {
         }
         register(chatInput);
         register(adminGui);
+        register(summoning.listener());
+        register(summoning.gui());
+        summoning.service().start();
     }
 
     @Override
@@ -239,10 +248,11 @@ public final class PluginRuntime implements ManagedRuntime {
             return;
         }
         RuntimeException failure = null;
+        try { summoning.close(); } catch (RuntimeException exception) { failure = exception; }
         try {
             adminGui.close();
         } catch (RuntimeException exception) {
-            failure = exception;
+            failure = combine(failure, exception);
         }
         try {
             bossManager.stop(true);
@@ -269,12 +279,20 @@ public final class PluginRuntime implements ManagedRuntime {
     }
 
     public ConfigLoadReport reloadRepositories(ConfigLoadMode mode) {
-        return reloadRepositories(plugin, reloadCoordinator, mode);
+        var prepared = reloadCoordinator.prepare(mode, java.util.EnumSet.allOf(ConfigDomain.class));
+        var summonCandidate = summoning.service().repository().prepare();
+        gg.fotia.mythictools.summoning.config.SummonRepository.validateBossBindings(summonCandidate, prepared.snapshot().bosses());
+        logConfigReport(plugin, prepared.report());
+        reloadCoordinator.publish(prepared);
+        summoning.service().repository().publish(summonCandidate);
+        return prepared.report();
     }
 
     /** 完整校验候选后返回一次发布动作，供异步写盘成功后提交。 */
     public Runnable prepareRepositorySave(ConfigDomain domain) {
         var prepared = reloadCoordinator.prepare(ConfigLoadMode.STRICT, java.util.EnumSet.of(domain));
+        gg.fotia.mythictools.summoning.config.SummonRepository.validateBossBindings(
+                summoning.service().repository().snapshot(), prepared.snapshot().bosses());
         logConfigReport(plugin, prepared.report());
         return () -> {
             if (closed.get()) {
@@ -287,7 +305,11 @@ public final class PluginRuntime implements ManagedRuntime {
     /** 只重载指定配置域（连带其依赖域），未变更域复用当前快照。 */
     public ConfigLoadReport reloadRepositories(ConfigLoadMode mode, java.util.Set<ConfigDomain> domains) {
         try {
-            ConfigLoadReport report = reloadCoordinator.reload(mode, domains);
+            var prepared = reloadCoordinator.prepare(mode, domains);
+            gg.fotia.mythictools.summoning.config.SummonRepository.validateBossBindings(
+                    summoning.service().repository().snapshot(), prepared.snapshot().bosses());
+            reloadCoordinator.publish(prepared);
+            ConfigLoadReport report = prepared.report();
             logConfigReport(plugin, report);
             return report;
         } catch (ConfigLoadException exception) {
@@ -339,6 +361,8 @@ public final class PluginRuntime implements ManagedRuntime {
     public BossManager bossManager() {
         return bossManager;
     }
+
+    public gg.fotia.mythictools.summoning.SummoningModule summoning() { return summoning; }
 
     /** 返回会在完整运行时切换中被清理的活动状态。 */
     public RuntimeActivity activity() {

@@ -38,7 +38,7 @@ public final class GuiTemplateRepository {
                 "boss-time-window-list", "boss-time-window-editor",
                 "boss-ranking-reward-menu", "boss-reward-rank-list",
                 "boss-reward-group-list", "boss-reward-group-editor",
-                "boss-spawner-list", "boss-spawner-editor", "selector", "confirm"}) {
+                "boss-spawner-list", "boss-spawner-editor", "selector", "confirm", "summon-editor"}) {
             File file = new File(plugin.getDataFolder(), "gui/" + id + ".yml");
             try {
                 loaded.put(id, new GuiTemplate(id, YamlFiles.load(file), messages, items));

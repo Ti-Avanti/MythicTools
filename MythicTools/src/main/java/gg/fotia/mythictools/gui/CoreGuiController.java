@@ -23,7 +23,7 @@ final class CoreGuiController {
         GuiTemplate template = context.screens.template("main");
         GuiHolder holder = new GuiHolder(GuiView.MAIN, null, null, 0);
         Inventory inventory = context.screens.createInventory(holder, template, player, Map.of());
-        for (char symbol : new char[]{'d', 's', 'b', 'l', 'r', 'c'}) {
+        for (char symbol : new char[]{'d', 's', 'b', 'l', 't', 'r', 'c'}) {
             context.screens.fillStatic(inventory, template, symbol, player, Map.of());
         }
         player.openInventory(inventory);
@@ -96,6 +96,8 @@ final class CoreGuiController {
             openSpawningMenu(player);
         } else if (template.slots('b').contains(slot)) {
             openList(player, AdminType.BOSS, 0);
+        } else if (template.slots('t').contains(slot)) {
+            ((gg.fotia.mythictools.MythicToolsPlugin) context.plugin).summoning().gui().open(player);
         } else if (template.slots('l').contains(slot)) {
             context.leveling.openMenu(player);
         } else if (template.slots('r').contains(slot)) {
@@ -363,6 +365,15 @@ final class CoreGuiController {
         GuiTemplate template = context.screens.template("confirm");
         if (template.slots('y').contains(slot)) {
             try {
+                if (holder.type == AdminType.BOSS) {
+                    var references = ((gg.fotia.mythictools.MythicToolsPlugin) context.plugin).summoning()
+                            .service().repository().bossReferences(holder.id);
+                    if (!references.isEmpty()) {
+                        context.messages.send(player, "summon.boss-in-use", Map.of("references", String.join(", ", references)));
+                        openList(player, holder.type, holder.page);
+                        return;
+                    }
+                }
                 if (holder.type == AdminType.MOB_GROUP) {
                     List<String> references = context.targets.mobGroupReferences(holder.id);
                     if (!references.isEmpty()) {

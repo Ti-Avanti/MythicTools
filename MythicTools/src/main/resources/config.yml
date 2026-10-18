@@ -74,3 +74,12 @@ Leveling:
 
 # 输出调试日志（重载耗时与配置诊断数量）
 Debug: false
+
+# 召唤仪式与预览共用性能限制；降低质量只减少粒子数量。
+Summoning:
+  Update-Ticks: 2
+  View-Range: 32
+  Particle-Budget: 12000
+  Max-Sessions: 32
+  Max-Layers: 3
+  Quality: "medium"

@@ -4,7 +4,7 @@
 
     <groupId>gg.fotia</groupId>
     <artifactId>mythictools</artifactId>
-    <version>1.0.6</version>
+    <version>1.1.0</version>
     <name>MythicTools</name>
     <description>MythicMobs 掉落、刷怪与 Boss 管理工具</description>
 
@@ -52,6 +52,27 @@
     </repositories>
 
     <dependencies>
+        <dependency>
+            <groupId>com.ticxo.modelengine</groupId>
+            <artifactId>ModelEngine</artifactId>
+            <version>R4.1.0</version>
+            <scope>provided</scope>
+            <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.github.toxicity188</groupId>
+            <artifactId>bettermodel-api</artifactId>
+            <version>3.4.1</version>
+            <scope>provided</scope>
+            <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.github.toxicity188</groupId>
+            <artifactId>bettermodel-bukkit-api</artifactId>
+            <version>3.4.1</version>
+            <scope>provided</scope>
+            <exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions>
+        </dependency>
         <dependency>
             <groupId>com.sk89q.worldguard</groupId>
             <artifactId>worldguard-bukkit</artifactId>
@@ -203,6 +224,18 @@
                         <configuration>
                             <target>
                                 <mkdir dir="${project.build.outputDirectory}" />
+                                <javac srcdir="${project.basedir}/src/main/java" destdir="${project.build.outputDirectory}"
+                                       includeantruntime="false" encoding="UTF-8" release="17"
+                                       includes="gg/fotia/mythictools/summoning/visual/VisualProvider.java,gg/fotia/mythictools/summoning/visual/VisualHandle.java,gg/fotia/mythictools/summoning/visual/VisualConfig.java,gg/fotia/mythictools/summoning/config/SummonNumbers.java">
+                                    <classpath refid="maven.compile.classpath" />
+                                </javac>
+                                <javac srcdir="${project.basedir}/src/bettermodel/java" destdir="${project.build.outputDirectory}"
+                                       includeantruntime="false" encoding="UTF-8" release="21">
+                                    <classpath>
+                                        <pathelement location="${project.build.outputDirectory}" />
+                                        <path refid="maven.compile.classpath" />
+                                    </classpath>
+                                </javac>
                                 <javac srcdir="${project.basedir}/src/modern/java" destdir="${project.build.outputDirectory}" includeantruntime="false" encoding="${project.build.sourceEncoding}" release="${maven.compiler.release}">
                                     <classpath>
                                         <fileset dir="${project.build.directory}/modern-spigot-api">

@@ -19,6 +19,16 @@ public final class ResourceInstaller {
             "lang/zh_CN.yml",
             "lang/en_US.yml",
             "gui/main.yml",
+            "gui/summon-editor.yml",
+            "summoning/items/example.yml",
+            "summoning/effects/arcane.yml",
+            "summoning/effects/flame.yml",
+            "summoning/effects/frost.yml",
+            "summoning/effects/thunder.yml",
+            "summoning/effects/void.yml",
+            "summoning/effects/nature.yml",
+            "summoning/effects/soul.yml",
+            "summoning/effects/sand.yml",
             "gui/list.yml",
             "gui/category.yml",
             "gui/editor.yml",
@@ -77,9 +87,35 @@ public final class ResourceInstaller {
         }
         migrateCategoryLayout(plugin);
         migrateLevelingMenu(plugin);
+        migrateSummonMenu(plugin);
         migrateItemRewardEditorTemplate(plugin);
         migrateBossTimeWindowListTemplate(plugin);
         migrateSemanticMaterialTemplates(plugin);
+    }
+
+    private static void migrateSummonMenu(JavaPlugin plugin) {
+        File file = new File(plugin.getDataFolder(), "gui/main.yml");
+        try {
+            YamlConfiguration yaml = YamlFiles.load(file);
+            var layout = new java.util.ArrayList<>(yaml.getStringList("Layout"));
+            if (layout.stream().anyMatch(line -> line.indexOf('t') >= 0)) return;
+            int row = -1, column = -1;
+            for (int i = 1; i < layout.size() && row < 0; i++) {
+                if (layout.get(i).charAt(4) == '#') { row = i; column = 4; }
+            }
+            if (row < 0) {
+                plugin.getLogger().info("主菜单无空位添加召唤入口，可使用 /mt summon gui");
+                return;
+            }
+            String line = layout.get(row);
+            layout.set(row, line.substring(0, column) + 't' + line.substring(column + 1));
+            yaml.set("Layout", layout);
+            yaml.set("items.t.material", "ENDER_EYE");
+            yaml.set("items.t.display-name-key", "summon.gui.list");
+            YamlFiles.saveAtomically(yaml, file);
+        } catch (IOException | InvalidConfigurationException exception) {
+            plugin.getLogger().log(Level.WARNING, "无法添加召唤菜单入口", exception);
+        }
     }
 
     private static void mergeMissingKeys(JavaPlugin plugin, String path) {

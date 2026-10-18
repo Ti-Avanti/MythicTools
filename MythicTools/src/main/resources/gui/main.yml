@@ -2,7 +2,7 @@ title-key: gui.main.title
 Layout:
   - '#########'
   - '#d##s##b#'
-  - '#########'
+  - '####t####'
   - '#r##l##c#'
 items:
   d:
@@ -27,3 +27,6 @@ items:
   c:
     material: BARRIER
     display-name-key: gui.main.close-name
+  t:
+    material: ENDER_EYE
+    display-name-key: summon.gui.list
